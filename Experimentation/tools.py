@@ -1,4 +1,4 @@
-"""# **IMPORTS**"""
+# IMPORTS
 
 from transformers import AutoModelForImageClassification, AutoProcessor, AutoImageProcessor
 import torch
@@ -12,26 +12,9 @@ import numpy as np
 import sys
 import math
 
-"""# **INITIALISATION**"""
 
-# Set the device
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-image = Image.open("/content/sample_data/dog.jpg")
-
-plt.imshow(image)
-plt.axis("off")
-plt.show
-
-model_name = "hilmansw/resnet18-catdog-classifier"
-
-model = AutoModelForImageClassification.from_pretrained(model_name).to(device)
-model.eval()
-
-# processor = AutoProcessor.from_pretrained(model_name)
-# print(processor)
-
-# Les Transforms
+# TRANSFORMS
 
 transformTensor = transforms.ToTensor()
 
@@ -51,14 +34,14 @@ transformOut = transforms.Compose([
     )
 ])
 
-"""# **METHODS**"""
 
-def multiple_copies_generator(image, number_of_copies = 40):
-    return image.unsqueeze(0).expand(number_of_copies, -1, -1, -1).to(device) # Format [number_of_copies, 3, x, y]
 
-import torch
+# METHODS
 
-def pixel_to_change_generator(image, lower_pourcentage=0.001, upper_pourcentage=0.01):
+def multiple_copies_generator(image, batch, device):
+    return image.unsqueeze(0).expand(batch, -1, -1, -1).to(device) # Format [batch, 3, x, y]
+
+def pixel_to_change_generator(image, lower_pourcentage, upper_pourcentage, device):
     _, height, width = image.shape
     random_pourcentage = torch.FloatTensor(1).uniform_(lower_pourcentage, upper_pourcentage).to(device)
     pixel_to_change = (random_pourcentage * (height * width)).floor().int().item()
@@ -83,7 +66,7 @@ def apply_convolution(tensor, kernel):
 #     The max amount of elite_matrices is always divider x divider; divider = 7; 7x7 => 49 => max amount of elite_matrices
 #     Control the total noise added with divider and elite_matrice
 
-def noise_generator_edge(multiple_copies, reach = 1, divider = 7, elite_matrices=2, blurry=False, blurriness=8, targeted=False, targeted_channel=0): # reach = 0.1  ->  -0.1 <= x <= 0.1
+def noise_generator_edge(multiple_copies, reach, divider, elite_matrices, blurry, blurriness, targeted, targeted_channel, device): # reach = 0.1  ->  -0.1 <= x <= 0.1
 
     batch_size, channels, height, width = multiple_copies.shape
 
@@ -160,13 +143,13 @@ def noise_generator_edge(multiple_copies, reach = 1, divider = 7, elite_matrices
 
     return multiple_copies.clamp_(0, 1)
 
-def parent_generator_fixed(multiple_copies):
+def parent_generator_fixed(multiple_copies, device):
     batch_size = multiple_copies.shape[0]
     parents_index = torch.randperm(batch_size, device=device) # shuffle the indexes
 
     return parents_index
 
-def crossover_generator(multiple_copies, parents_index, pourcentage_height = 0.15):
+def crossover_generator(multiple_copies, parents_index, pourcentage_height, device):
   multiple_copies_cross = multiple_copies.clone().to(device)
 
   batch_size, channels, height, width = multiple_copies.shape
@@ -194,7 +177,7 @@ def crossover_generator(multiple_copies, parents_index, pourcentage_height = 0.1
 
   return multiple_copies_cross
 
-def through_model(multiple_copies):
+def through_model(multiple_copies, device):
     # multiple_copies.shape -> (40, 3, 225, 224)
     batch_size = multiple_copies.shape[0]
 
@@ -211,37 +194,37 @@ def through_model(multiple_copies):
 
     return probabilities
 
-def selection(multiple_copies, probabilities, elites, wanted_class, unwanted_class, wanted=True):
+def selection(multiple_copies, probabilities, elite, wanted_class, device):
 
     batch_size, channels, height, width = multiple_copies.shape
 
-    probabilities_class = probabilities[:, wanted_class] if wanted else probabilities[:, unwanted_class]
+    probabilities_class = probabilities[:, wanted_class]
     probabilities_class = probabilities_class.to(device)
 
-    sorted_probabilities, indices = torch.sort(probabilities_class, descending=wanted)
+    sorted_probabilities, indices = torch.sort(probabilities_class, descending=True)
     sorted_probabilities = sorted_probabilities.to(device)
     indices = indices.to(device)
 
-    elites_index = indices[:elites]
-    middle_index = indices[elites:batch_size//2]
+    elite_index = indices[:elite]
+    middle_index = indices[elite:batch_size//2]
     low_index = indices[batch_size//2:]
 
-    elites_proba = sorted_probabilities[:elites]
-    middle_proba = sorted_probabilities[elites:batch_size//2]
+    elite_proba = sorted_probabilities[:elite]
+    middle_proba = sorted_probabilities[elite:batch_size//2]
     low_proba = sorted_probabilities[batch_size//2:]
 
-    elites_proba = elites_proba.float()
+    elite_proba = elite_proba.float()
     middle_proba = middle_proba.float()
     low_proba = low_proba.float()
 
-    elites_selection = multiple_copies[elites_index].to(device)
+    elite_selection = multiple_copies[elite_index].to(device)
     middle_selection = multiple_copies[middle_index].to(device)
     low_selection = multiple_copies[low_index].to(device)
 
-    #return elites_selection, middle_selection, low_selection, elites_index, elites_proba
-    return elites_selection, middle_selection, elites_index, elites_proba
+    #return elite_selection, middle_selection, low_selection, elite_index, elite_proba
+    return elite_selection, middle_selection, elite_index, elite_proba
 
-def from_rgb_to_ycbcr(tensor_image):
+def from_rgb_to_ycbcr(tensor_image, device):
     transform_matrix = torch.tensor([[0.299, 0.587, 0.114],
                                      [-0.169, -0.331, 0.499],
                                      [0.499, -0.460, -0.039]], device=device)
@@ -253,12 +236,12 @@ def from_rgb_to_ycbcr(tensor_image):
 
     return tensor_image_ycbcr
 
-def checker(elites_index, elites_proba, threshold):
+def checker(elite_index, elite_proba, threshold):
 
-    # Search uniquely in elites
-    for i in range(len(elites_proba)):
-      if elites_proba[i] >= threshold:
-        return True, elites_index[i]
+    # Search uniquely in elite
+    for i in range(len(elite_proba)):
+      if elite_proba[i] >= threshold:
+        return True, elite_index[i]
       else:
         return False, -1
 
@@ -272,7 +255,7 @@ def unnoticeable(adv_image, tensor_image, precision=0.0001): # Max size of an im
 
   base_size = tensor_image.sum()
   adv_size = adv_image.sum()
-  deficit = tensor.ones(3, 224, 224) * precision
+  deficit = torch.ones(3, 224, 224) * precision
 
   while adv_size > base_size:
 
