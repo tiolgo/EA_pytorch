@@ -177,7 +177,10 @@ def crossover_generator(multiple_copies, parents_index, pourcentage_height, devi
 
   return multiple_copies_cross
 
-def through_model(multiple_copies, device):
+def through_model(multiple_copies, model, device):
+    
+    multiple_copies = multiple_copies.clone()
+
     # multiple_copies.shape -> (40, 3, 225, 224)
     batch_size = multiple_copies.shape[0]
 
@@ -186,8 +189,6 @@ def through_model(multiple_copies, device):
 
     with torch.no_grad():  # CNN inputs
         outputs = model(input_copies)
-
-    processed_copies = transformOut(input_copies)
 
     logits = outputs.logits  # logits -> [40, num_classes]
     probabilities = torch.nn.functional.softmax(logits, dim=-1)
