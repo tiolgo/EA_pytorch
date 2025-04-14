@@ -44,6 +44,7 @@ def ea_edges_v1(model, enums, image_url, batch, threshold, blurry, blurriness, t
 
   # 🧑‍🎨 LOAD AND PROCESS THE BASE IMAGE
   image = Image.open(image_url)
+  image = transformResize(image)
 
   tensor_image = transformTensor(image).to(device)
   multiple_copies = multiple_copies_generator(tensor_image, batch, device)
@@ -141,6 +142,7 @@ def ea_edges_v2(model, enums, image_url, batch, blurry, blurriness, targeted, ta
   best_probability = 0
 
   image = Image.open(image_url)
+  image = transformResize(image)
 
   tensor_image = transformTensor(image).to(device)
   multiple_copies = multiple_copies_generator(tensor_image, batch, device)
@@ -207,6 +209,7 @@ def ea_edges_v3(model, enums, image_url, batch, blurry, blurriness, targeted, ta
   best_probability = 0
 
   image = Image.open(image_url)
+  image = transformResize(image)
 
   tensor_image = transformTensor(image).to(device)
   multiple_copies = multiple_copies_generator(tensor_image, batch, device)
