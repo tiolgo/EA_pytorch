@@ -9,12 +9,12 @@ import torchvision.transforms as transforms
 from PIL import Image
 import requests
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import random
 import numpy as np
 import sys
 import math
 import itertools
-
 
 
 # INITIALISATION
@@ -62,6 +62,21 @@ for mp, r, h in itertools.product(min_pourcentage, reach, height):
 
     best_probabilities.append(best_probability)
     coordinates.append((mp, r, h))
+mp, r, h = zip(*coords)
+
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+
+scatter = ax.scatter(mp, r, h, c=h, cmap='viridis', s=100)
+
+fig.colorbar(scatter, ax=ax, label='h value')
+
+ax.set_xlabel('mp')
+ax.set_ylabel('r')
+ax.set_zlabel('h')
+ax.set_title('adv image 3D plot')
+
+plt.show()
     
 
 
