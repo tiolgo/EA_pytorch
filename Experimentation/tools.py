@@ -11,6 +11,7 @@ import random
 import numpy as np
 import sys
 import math
+import itertools
 
 
 
@@ -263,3 +264,64 @@ def unnoticeable(adv_image, tensor_image, precision=0.0001): # Max size of an im
     adv_size = adv_image.sum()
 
   return adv_image
+
+def individual_pixel(tensor_image, channel, height, width, wanted_class, model, device):
+   
+
+  image_kill = tensor_image.clone()
+  print(image_kill.shape)
+  image_push = tensor_image.clone()
+
+  # Avant de commencer il ne faut pas oublier qu'il y a 3 channels et j'ai bien dire
+  # qu'il n'y a pas 224x224 pixels mais plutot 224x224x3 pixels
+
+  # On va commencer par modifier le premier premier pixel du premier channel
+  image_kill[channel, height, width] = 0
+  image_push[channel, height, width] = 1
+
+  batch_image = torch.stack([image_kill, image_push])
+
+  probabilities = through_model(batch_image, model, device)
+  print(probabilities)
+
+  wanted_probabilities = probabilities[:, wanted_class]
+  print(wanted_probabilities)
+
+  if wanted_probabilities[0] >= wanted_probabilities[1]:
+    return (wanted_probabilities[0], -1, channel, height, width)
+  else:
+    return (wanted_probabilities[1], 1, channel, height, width)
+  
+def best_pixels(multiple_copies, pourcentage, reach, wanted_class, model, device):
+   
+  batch_size, channels, height, width = multiple_copies.shape
+
+  multiple_copies = multiple_copies.clone()
+  tensor_image = multiple_copies[0].clone()
+
+  channels = [0, 1, 2]
+  heights = np.arange(0, 225, 1)
+  widths = np.arange(0, 225, 1)
+
+  best_pixels_probabilities = [] 
+
+  for c, h, w in itertools.product(channels, heights, widths):
+    proba = individual_pixel(tensor_image, c, h, w, wanted_class, model, device)
+    best_pixels_probabilities.append(proba)
+
+    # max pourcantage is 1 which is 100% and represent 3x224x224 => 150528
+    number_of_pixel = int(pourcentage * 150528)
+    sorted_probabilities = sorted(best_pixels_probabilities, key=lambda x: x[0], reverse=True)
+
+    selection_of_pixels = sorted_probabilities[:number_of_pixel]
+
+  for pixel in selection_of_pixels:
+      noise = torch.empty(batch_size).uniform_(-reach, reach).to(device)
+      multiple_copies[:, pixel[2],pixel[3], pixel[4]] += noise
+  
+  return multiple_copies
+
+
+
+
+

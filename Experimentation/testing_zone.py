@@ -34,17 +34,25 @@ model.eval()
 
 # Test noise_generator_edge()
 
-image = Image.open("../dog_images/9.jpg")
+# image = Image.open("../dog_images/9.jpg")
+# image = transformResize(image)
+# tensor_image = transformTensor(image).to(device)
+
+# group_tensor_image = multiple_copies_generator(tensor_image, 40, device)
+# print(group_tensor_image.shape)
+
+# group_tensor_image = noise_generator_edge(group_tensor_image, reach = 1, divider = 56, elite_matrices=400, blurry=False, blurriness=2, targeted=False, targeted_channel=0, device=device)
+# test_image = group_tensor_image[0]
+
+# image_restored = transformPIL(test_image)
+# plt.imshow(image_restored)
+# plt.axis("off")
+# plt.show()
+
+
+
+image = Image.open("../dog_images/0.jpg")
 image = transformResize(image)
 tensor_image = transformTensor(image).to(device)
 
-group_tensor_image = multiple_copies_generator(tensor_image, 40, device)
-print(group_tensor_image.shape)
-
-group_tensor_image = noise_generator_edge(group_tensor_image, reach = 1, divider = 56, elite_matrices=400, blurry=False, blurriness=2, targeted=False, targeted_channel=0, device=device)
-test_image = group_tensor_image[0]
-
-image_restored = transformPIL(test_image)
-plt.imshow(image_restored)
-plt.axis("off")
-plt.show()
+sign, proba = individual_pixel(model, tensor_image, 0, 0, 0, 0, device)
