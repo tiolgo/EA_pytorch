@@ -54,5 +54,13 @@ model.eval()
 image = Image.open("../dog_images/0.jpg")
 image = transformResize(image)
 tensor_image = transformTensor(image).to(device)
+multiple_copies = multiple_copies_generator(tensor_image, 40, device)
 
-sign, proba = individual_pixel(model, tensor_image, 0, 0, 0, 0, device)
+best_pixels_probabilities = best_pixels(tensor_image, True, 0.001, 0, model, device)
+multiple_copies = change_pixels(multiple_copies, best_pixels_probabilities, 0.5, 0.1, device)
+test_image = multiple_copies[0]
+
+image_restored = transformPIL(test_image)
+plt.imshow(image_restored)
+plt.axis("off")
+plt.show()

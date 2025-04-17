@@ -265,11 +265,11 @@ def unnoticeable(adv_image, tensor_image, precision=0.0001): # Max size of an im
 
   return adv_image
 
+
 def individual_pixel(tensor_image, channel, height, width, wanted_class, model, device):
    
 
   image_kill = tensor_image.clone()
-  print(image_kill.shape)
   image_push = tensor_image.clone()
 
   # Avant de commencer il ne faut pas oublier qu'il y a 3 channels et j'ai bien dire
@@ -282,43 +282,63 @@ def individual_pixel(tensor_image, channel, height, width, wanted_class, model, 
   batch_image = torch.stack([image_kill, image_push])
 
   probabilities = through_model(batch_image, model, device)
-  print(probabilities)
 
   wanted_probabilities = probabilities[:, wanted_class]
-  print(wanted_probabilities)
 
   if wanted_probabilities[0] >= wanted_probabilities[1]:
     return (wanted_probabilities[0], -1, channel, height, width)
   else:
     return (wanted_probabilities[1], 1, channel, height, width)
+
+
+def best_pixels(tensor_image, random, pourcentage, wanted_class, model, device): # ce pourcentage rend le programme tres lourd
+  # passer 1 revient a passer 100% soit 150528 images dans le CNN
+
+  channels, height, width = tensor_image.shape
+  tensor_image = tensor_image.clone()
+
+  if random:
+    size = int(pourcentage * (channels * height * width)) # utilise pas itertools car sinon on a pas vrament des pixels random car on target tout une ligne
+    random_pixels = [(np.random.randint(0, 3), np.random.randint(0, 224), np.random.randint(0, 224)) for _ in range(size)]
+
+    best_pixels_probabilities = [] 
+
+    for pixel in random_pixels:
+      proba = individual_pixel(tensor_image, pixel[0], pixel[1], pixel[2], wanted_class, model, device)
+      best_pixels_probabilities.append(proba)
+
+    return best_pixels_probabilities
   
-def best_pixels(multiple_copies, pourcentage, reach, wanted_class, model, device):
-   
+  else:  
+    channels = [0, 1, 2]
+    heights = np.arange(0, 224, 1)
+    widths = np.arange(0, 224, 1)
+
+    best_pixels_probabilities = [] 
+
+    for c, h, w in itertools.product(channels, heights, widths):
+      proba = individual_pixel(tensor_image, c, h, w, wanted_class, model, device)
+      best_pixels_probabilities.append(proba)
+    
+    return best_pixels_probabilities
+
+
+def change_pixels(multiple_copies, best_pixels_probabilities, pourcentage, reach, device):
+  # pourcentage sert a prendre les n meilleur pixels et les modifier, ce n'est pas plus lourd
+
   batch_size, channels, height, width = multiple_copies.shape
-
   multiple_copies = multiple_copies.clone()
-  tensor_image = multiple_copies[0].clone()
 
-  channels = [0, 1, 2]
-  heights = np.arange(0, 225, 1)
-  widths = np.arange(0, 225, 1)
+  # max pourcantage is 1 which is 100% and represent 3x224x224 => 150528
+  size = int(pourcentage * (channels * height * width))
 
-  best_pixels_probabilities = [] 
-
-  for c, h, w in itertools.product(channels, heights, widths):
-    proba = individual_pixel(tensor_image, c, h, w, wanted_class, model, device)
-    best_pixels_probabilities.append(proba)
-
-    # max pourcantage is 1 which is 100% and represent 3x224x224 => 150528
-    number_of_pixel = int(pourcentage * 150528)
-    sorted_probabilities = sorted(best_pixels_probabilities, key=lambda x: x[0], reverse=True)
-
-    selection_of_pixels = sorted_probabilities[:number_of_pixel]
+  sorted_probabilities = sorted(best_pixels_probabilities, key=lambda x: x[0], reverse=True)
+  selection_of_pixels = sorted_probabilities[:size]
 
   for pixel in selection_of_pixels:
       noise = torch.empty(batch_size).uniform_(-reach, reach).to(device)
       multiple_copies[:, pixel[2],pixel[3], pixel[4]] += noise
-  
+
   return multiple_copies
 
 
