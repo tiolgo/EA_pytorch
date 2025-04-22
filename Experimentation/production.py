@@ -62,7 +62,7 @@ for mp, r, h in itertools.product(min_pourcentage, reach, height):
 
     best_probabilities.append(best_probability)
     coordinates.append((mp, r, h))
-mp, r, h = zip(*coords)
+mp, r, h = zip(*coordinates)
 
 fig = plt.figure()
 ax = fig.add_subplot(111, projection='3d')
