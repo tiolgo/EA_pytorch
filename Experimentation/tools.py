@@ -329,8 +329,9 @@ def change_pixels(multiple_copies, best_pixels_probabilities, pourcentage, reach
   batch_size, channels, height, width = multiple_copies.shape
   multiple_copies = multiple_copies.clone()
 
-  # max pourcantage is 1 which is 100% and represent 3x224x224 => 150528
-  size = int(pourcentage * (channels * height * width))
+  # max pourcentage is 1 which is 100% and represent 3x224x224 => 150528
+  # size = int(pourcentage * (channels * height * width))
+  size = int(pourcentage * len(best_pixels_probabilities))
 
   sorted_probabilities = sorted(best_pixels_probabilities, key=lambda x: x[0], reverse=True)
   selection_of_pixels = sorted_probabilities[:size]
