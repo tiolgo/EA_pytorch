@@ -51,6 +51,67 @@ def pixel_to_change_generator(image, lower_pourcentage, upper_pourcentage, devic
 def apply_convolution(tensor, kernel):
     return F.conv2d(tensor.unsqueeze(0).unsqueeze(0), kernel, padding=kernel.shape[2]//2)
 
+
+
+
+
+
+
+
+# COMPLETE VERSION
+
+# This code work well but is really heavy for some reasons because of torch.randperm() and the large size of pixels
+# I might make it lighter if i really need it in the future
+
+def noise_generator(multiple_copies, pourcentage, reach, targeted, targeted_channel, device): # reach = 0.1  ->  -0.1 <= x <= 0.1
+                                                                                       # RGB -> 0-R; 1-G; 2-B
+    batch_size, channels, height, width = multiple_copies.shape
+
+    # It goes from 0 to- 50176; and to from 0 to 224
+    # We do that to retrieve coordinate with // and % rather than using 2 times torch.randperm (pixel_x, pixel_y)
+
+    multiple_copies = multiple_copies.clone().to(device)
+
+    # Change only the blue channel and 90% of its pixels
+    if targeted:
+
+      total_pixels = height * width
+      pixels_to_change = int(pourcentage * (total_pixels))
+
+      pixel_x_y = torch.randperm(total_pixels)[:pixels_to_change].to(device)  # Shape -> (pixels_to_change)
+      pixel_x = pixel_x_y // width
+      pixel_y = pixel_x_y % width
+
+      for b in range(batch_size):
+        values_to_change = torch.empty(pixels_to_change).uniform_(-reach, reach).to(device)
+        multiple_copies[b, targeted_channel, pixel_x, pixel_y] += values_to_change
+
+    # Change every channels of 90% of the pixels
+    else:
+
+      total_pixels = channels * height * width
+      pixels_to_change = int(pourcentage * (total_pixels))
+      pixel_c_x_y = torch.randperm(total_pixels)[:pixels_to_change].to(device)
+
+      pixel_c = pixel_c_x_y // (height * width)
+      remainder = pixel_c_x_y % (height * width)
+      pixel_x = remainder // width
+      pixel_y = remainder % width
+
+      for b in range(batch_size):
+        for c in range(channels):
+          values_to_change = torch.empty(pixels_to_change).uniform_(-reach, reach).to(device)
+          multiple_copies[b, c, pixel_x, pixel_y] += values_to_change
+
+    return multiple_copies.clamp_(0, 1)
+
+
+
+
+
+
+
+
 # BEST VERSION
 
 # Rather to modify random pixels
@@ -143,6 +204,11 @@ def noise_generator_edge(multiple_copies, reach, divider, elite_matrices, blurry
 
     return multiple_copies.clamp_(0, 1)
 
+
+
+
+
+
 def parent_generator_fixed(multiple_copies, device):
     batch_size = multiple_copies.shape[0]
     parents_index = torch.randperm(batch_size, device=device) # shuffle the indexes
@@ -177,7 +243,7 @@ def crossover_generator(multiple_copies, parents_index, pourcentage_height, devi
 
   return multiple_copies_cross
 
-def through_model(multiple_copies, model, device):
+def through_model_old(multiple_copies, model, device):
     
     multiple_copies = multiple_copies.clone()
 
@@ -191,6 +257,23 @@ def through_model(multiple_copies, model, device):
         outputs = model(input_copies)
 
     logits = outputs.logits  # logits -> [40, num_classes]
+    probabilities = torch.nn.functional.softmax(logits, dim=-1)
+
+    return probabilities
+
+def through_model(multiple_copies, model, device):
+    
+    multiple_copies = multiple_copies.clone()
+
+    # multiple_copies.shape -> (40, 3, 225, 224)
+    batch_size = multiple_copies.shape[0]
+
+    # One pic after the other, transformer don't handle 4D
+    input_copies = torch.stack([transformIn(multiple_copies[i]).to(device) for i in range(batch_size)])
+
+    with torch.no_grad():  # CNN inputs
+        logits = model(input_copies)
+
     probabilities = torch.nn.functional.softmax(logits, dim=-1)
 
     return probabilities
@@ -236,6 +319,18 @@ def from_rgb_to_ycbcr(tensor_image, device):
     tensor_image_ycbcr = tensor_image_ycbcr.view(3, tensor_image.shape[1], tensor_image.shape[2])
 
     return tensor_image_ycbcr
+
+def from_ycbcr_to_rgb(tensor_image_ycbcr, device):
+    inverse_transform_matrix = torch.tensor([[1.0,  0.0,  1.402],
+                                              [1.0, -0.344136, -0.714136],
+                                              [1.0,  1.772,  0.0]], device=device)
+
+    tensor_image_rgb = torch.matmul(inverse_transform_matrix, tensor_image_ycbcr.view(3, -1)).to(device)
+
+    # Remettre à la forme image (C, H, W)
+    tensor_image_rgb = tensor_image_rgb.view(3, tensor_image_ycbcr.shape[1], tensor_image_ycbcr.shape[2])
+
+    return tensor_image_rgb
 
 def checker(elite_index, elite_proba, threshold):
 
@@ -299,7 +394,12 @@ def best_pixels(tensor_image, random, pourcentage, wanted_class, model, device):
 
   if random:
     size = int(pourcentage * (channels * height * width)) # utilise pas itertools car sinon on a pas vrament des pixels random car on target tout une ligne
-    random_pixels = [(np.random.randint(0, 3), np.random.randint(0, 224), np.random.randint(0, 224)) for _ in range(size)]
+    random_pixels = set()
+    while len(random_pixels) < size:
+        pixel = (np.random.randint(0, 3), np.random.randint(0, 224), np.random.randint(0, 224))
+        random_pixels.add(pixel)
+
+    random_pixels = list(random_pixels)
 
     best_pixels_probabilities = [] 
 
@@ -323,11 +423,11 @@ def best_pixels(tensor_image, random, pourcentage, wanted_class, model, device):
     return best_pixels_probabilities
 
 
-def change_pixels(multiple_copies, best_pixels_probabilities, pourcentage, reach, device):
+def change_pixels(tensor_image, best_pixels_probabilities, pourcentage, reach, device):
   # pourcentage sert a prendre les n meilleur pixels et les modifier, ce n'est pas plus lourd
 
-  batch_size, channels, height, width = multiple_copies.shape
-  multiple_copies = multiple_copies.clone()
+  channels, height, width = tensor_image.shape
+  tensor_image = tensor_image.clone()
 
   # max pourcentage is 1 which is 100% and represent 3x224x224 => 150528
   # size = int(pourcentage * (channels * height * width))
@@ -337,10 +437,101 @@ def change_pixels(multiple_copies, best_pixels_probabilities, pourcentage, reach
   selection_of_pixels = sorted_probabilities[:size]
 
   for pixel in selection_of_pixels:
-      noise = torch.empty(batch_size).uniform_(-reach, reach).to(device)
-      multiple_copies[:, pixel[2],pixel[3], pixel[4]] += noise
+      tensor_image[pixel[2],pixel[3], pixel[4]] += (pixel[1] * reach)
 
-  return multiple_copies
+  return tensor_image
+
+
+# YCbCr ne fonctionne pas car il veut qu'on cible des channel pas qu'on dispache le bruit sur plusieurs channels
+def individual_pixel_ycbcr(tensor_image, channel, height, width, wanted_class, model, device):
+   
+
+  image_kill = from_rgb_to_ycbcr(tensor_image.clone(), device)
+  image_push = from_rgb_to_ycbcr(tensor_image.clone(), device)
+
+  # Avant de commencer il ne faut pas oublier qu'il y a 3 channels et j'ai bien dire
+  # qu'il n'y a pas 224x224 pixels mais plutot 224x224x3 pixels
+
+  # On va commencer par modifier le premier premier pixel du premier channel
+  image_kill[channel, height, width] = 0
+  image_push[channel, height, width] = 1
+
+  image_kill = from_rgb_to_ycbcr(image_kill, device)
+  image_push = from_rgb_to_ycbcr(image_push, device)
+
+  batch_image = torch.stack([image_kill, image_push])
+
+  probabilities = through_model(batch_image, model, device)
+
+  wanted_probabilities = probabilities[:, wanted_class]
+
+  if wanted_probabilities[0] >= wanted_probabilities[1]:
+    return (wanted_probabilities[0], -1, channel, height, width)
+  else:
+    return (wanted_probabilities[1], 1, channel, height, width)
+  
+
+
+def best_pixels_ycbcr(tensor_image, random, pourcentage, wanted_class, model, device): # ce pourcentage rend le programme tres lourd
+  # passer 1 revient a passer 100% soit 150528 images dans le CNN
+
+  channels, height, width = tensor_image.shape
+  tensor_image = tensor_image.clone()
+
+  if random:
+    size = int(pourcentage * (channels * height * width)) # utilise pas itertools car sinon on a pas vrament des pixels random car on target tout une ligne
+    random_pixels = set()
+    while len(random_pixels) < size:
+        pixel = (np.random.randint(0, 3), np.random.randint(0, 224), np.random.randint(0, 224))
+        random_pixels.add(pixel)
+
+    random_pixels = list(random_pixels)
+
+    best_pixels_probabilities = [] 
+
+    for pixel in random_pixels:
+      proba = individual_pixel_ycbcr(tensor_image, pixel[0], pixel[1], pixel[2], wanted_class, model, device)
+      best_pixels_probabilities.append(proba)
+
+    return best_pixels_probabilities
+  
+  else:  
+    channels = [0, 1, 2]
+    heights = np.arange(0, 224, 1)
+    widths = np.arange(0, 224, 1)
+
+    best_pixels_probabilities = [] 
+
+    for c, h, w in itertools.product(channels, heights, widths):
+      proba = individual_pixel(tensor_image, c, h, w, wanted_class, model, device)
+      best_pixels_probabilities.append(proba)
+    
+    return best_pixels_probabilities
+  
+
+
+def change_pixels_ycbcr(tensor_image, best_pixels_probabilities, pourcentage, reach, device):
+  # pourcentage sert a prendre les n meilleur pixels et les modifier, ce n'est pas plus lourd
+
+  channels, height, width = tensor_image.shape
+  tensor_image = tensor_image.clone()
+
+  # max pourcentage is 1 which is 100% and represent 3x224x224 => 150528
+  # size = int(pourcentage * (channels * height * width))
+  size = int(pourcentage * len(best_pixels_probabilities))
+
+  sorted_probabilities = sorted(best_pixels_probabilities, key=lambda x: x[0], reverse=True)
+  selection_of_pixels = sorted_probabilities[:size]
+
+  tensor_image = from_rgb_to_ycbcr(tensor_image, device)
+
+  for pixel in selection_of_pixels:
+      tensor_image[pixel[2],pixel[3], pixel[4]] += (pixel[1] * reach)
+
+
+  tensor_image = from_ycbcr_to_rgb(tensor_image, device)
+
+  return tensor_image
 
 
 
