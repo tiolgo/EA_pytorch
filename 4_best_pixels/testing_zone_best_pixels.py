@@ -1,6 +1,6 @@
 # IMPORTS
 
-from Experimentation.ea_edges import *
+from edge.ea_edges import *
 
 from transformers import AutoModelForImageClassification, AutoProcessor, AutoImageProcessor
 import torch

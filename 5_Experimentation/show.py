@@ -1,6 +1,11 @@
 # IMPORTS
 
-from Experimentation.ea_edges import *
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from tools import *
 
 from transformers import AutoModelForImageClassification, AutoProcessor, AutoImageProcessor
 import torch
@@ -11,11 +16,14 @@ import requests
 import matplotlib.pyplot as plt
 import random
 import numpy as np
+import pandas as pd
 import sys
 import math
 import itertools
 import time
 from mpl_toolkits.mplot3d import Axes3D
+import seaborn as sns
+import timm
 
 
 
@@ -26,10 +34,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
 # Set model
-model_name = "hilmansw/resnet18-catdog-classifier"
-
-model = AutoModelForImageClassification.from_pretrained(model_name).to(device)
-model.eval()
+model = timm.create_model('resnet50.tv_in1k', pretrained=True)
+model = model.to(device)
+model = model.eval()
 
 
 
@@ -38,21 +45,13 @@ image = transformResize(image)
 
 tensor_image = transformTensor(image).to(device)
 
-start1 = time.time()
+zeros = torch.zeros_like(tensor_image[0])  # [H, W]
+tensor_image_R = torch.stack([tensor_image[2], zeros, zeros])
+tensor_image_G = torch.stack([zeros, tensor_image[2], zeros])
+tensor_image_B = torch.stack([zeros, zeros, tensor_image[2]])
 
-best_pixels_probabilities = best_pixels(tensor_image, False, 0.01, 0, model, device)
+image_restored = transformPIL(tensor_image_B)
 
-end1 = time.time()
-
-print(end1-start1)
-
-modified_image = change_pixels(tensor_image, best_pixels_probabilities, 0.6, 0.006, device)
-batch_modified_image = modified_image.unsqueeze(0)
-proba_after = through_model(batch_modified_image, model, device)
-proba_after = proba_after[0, 0].item()
-print(proba_after)
-
-image_restored = transformPIL(modified_image)
 plt.imshow(image_restored)
 plt.axis("off")
 plt.show()

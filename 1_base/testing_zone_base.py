@@ -1,6 +1,6 @@
 # IMPORTS
 
-from Experimentation.ea_edges import *
+from ea_base import *
 
 from transformers import AutoModelForImageClassification, AutoProcessor, AutoImageProcessor
 import torch
@@ -40,7 +40,7 @@ image_list = ["../dog_images/0.jpg", "../dog_images/1.jpg", "../dog_images/2.jpg
 
 # TESTING ZONE
 
-def table_maker(model_name, device, enums, image_list, blurry, blurriness, targeted, targeted_channel):
+def table_maker(model_name, device, enums, image_list, targeted, targeted_channel):
 
     # Set model
     model = timm.create_model(model_name, pretrained=True)
@@ -50,23 +50,17 @@ def table_maker(model_name, device, enums, image_list, blurry, blurriness, targe
     # STABLE PARAMETERS
     enums = enums
     batch = 40
-    blurry = blurry
-    blurriness = blurriness
     targeted = targeted
     targeted_channel = targeted_channel
     wanted_class = 0
     height = 0.15
     reach = 0.1
-    manual = False
-    divider = 7
-    elite_matrices = 20
-    min_pourcentage = 0.5
+    pourcentage = 0.5
 
     # CHANGING PARAMETERS
     changing_height = np.arange(0, 1.05, 0.05) # 20
     changing_reach = np.arange(0, 0.105, 0.005) # 20
-    changing_divider = [1, 2, 4, 7, 8, 14, 16, 28, 32, 56] # 10 56 is th maximum because de bluriness is set to 4
-    changing_min_pourcentage = np.arange(0, 1.05, 0.05) # 20
+    changing_pourcentage = np.arange(0, 1.05, 0.05) # 20
 
     # HEIGHT SECTION
     results = []
@@ -75,20 +69,16 @@ def table_maker(model_name, device, enums, image_list, blurry, blurriness, targe
 
     for image_url in image_list:
         for ch in changing_height:
-            result = ea_edges_v3(model, enums, image_url, batch, blurry, blurriness, targeted, targeted_channel, wanted_class, ch, reach, 
-                    manual, divider, elite_matrices, min_pourcentage, device)
+            result = ea_base(model, enums, image_url, batch, targeted, targeted_channel, wanted_class, ch, reach, pourcentage, device)
             
             results.append({
                                     "model": model_name,
                                     "image": image_url,
-                                    "blurry": blurry,
-                                    "blurriness": blurriness,
                                     "targeted": targeted,
                                     "targeted_channel": targeted_channel,
                                     "height": ch,
                                     "reach": reach,
-                                    "divider": divider,
-                                    "min_pourcentage": min_pourcentage,
+                                    "pourcentage": pourcentage,
                                     "result": result
                                 })
 
@@ -102,47 +92,16 @@ def table_maker(model_name, device, enums, image_list, blurry, blurriness, targe
 
     for image_url in image_list:
         for cr in changing_reach:
-            result = ea_edges_v3(model, enums, image_url, batch, blurry, blurriness, targeted, targeted_channel, wanted_class, height, cr, 
-                    manual, divider, elite_matrices, min_pourcentage, device)
+            result = ea_base(model, enums, image_url, batch, targeted, targeted_channel, wanted_class, height, cr, pourcentage, device)
             
             results.append({
                                     "model": model_name,
                                     "image": image_url,
-                                    "blurry": blurry,
-                                    "blurriness": blurriness,
                                     "targeted": targeted,
                                     "targeted_channel": targeted_channel,
                                     "height": height,
                                     "reach": cr,
-                                    "divider": divider,
-                                    "min_pourcentage": min_pourcentage,
-                                    "result": result
-                            })
-
-    end = time.time()
-
-    print(f"Execution time: {end - start}s")
-
-    # DIVIDER SECTION
-
-    start = time.time()
-
-    for image_url in image_list:
-        for cd in changing_divider:
-            result = ea_edges_v3(model, enums, image_url, batch, blurry, blurriness, targeted, targeted_channel, wanted_class, height, reach, 
-                    manual, cd, elite_matrices, min_pourcentage, device)
-            
-            results.append({
-                                    "model": model_name,
-                                    "image": image_url,
-                                    "blurry": blurry,
-                                    "blurriness": blurriness,
-                                    "targeted": targeted,
-                                    "targeted_channel": targeted_channel,
-                                    "height": height,
-                                    "reach": reach,
-                                    "divider": cd,
-                                    "min_pourcentage": min_pourcentage,
+                                    "pourcentage": pourcentage,
                                     "result": result
                                 })
 
@@ -150,26 +109,23 @@ def table_maker(model_name, device, enums, image_list, blurry, blurriness, targe
 
     print(f"Execution time: {end - start}s")
 
+
     # MIN POURCENTAGE SECTION
 
     start = time.time()
 
     for image_url in image_list:
-        for cmp in changing_min_pourcentage:
-            result = ea_edges_v3(model, enums, image_url, batch, blurry, blurriness, targeted, targeted_channel, wanted_class, height, reach, 
-                    manual, divider, elite_matrices, cmp, device)
+        for cp in changing_pourcentage:
+            result = ea_base(model, enums, image_url, batch, targeted, targeted_channel, wanted_class, height, reach, cp, device)
             
             results.append({
                                     "model": model_name,
                                     "image": image_url,
-                                    "blurry": blurry,
-                                    "blurriness": blurriness,
                                     "targeted": targeted,
                                     "targeted_channel": targeted_channel,
                                     "height": height,
                                     "reach": reach,
-                                    "divider": divider,
-                                    "min_pourcentage": cmp,
+                                    "pourcentage": cp,
                                     "result": result
                                 })
 
@@ -182,13 +138,12 @@ def table_maker(model_name, device, enums, image_list, blurry, blurriness, targe
 
 
 for model_name in model_list:
-    a = table_maker(model_name, device, 100, image_list, False, 0, False, 0)
-    b = table_maker(model_name, device, 100, image_list, False, 0, True, 0)
-    c = table_maker(model_name, device, 100, image_list, False, 0, True, 1)
-    d = table_maker(model_name, device, 100, image_list, False, 0, True, 2)
-    e = table_maker(model_name, device, 100, image_list, True, 4, False, 0)
+    a = table_maker(model_name, device, 100, image_list, False, 0)
+    b = table_maker(model_name, device, 100, image_list, True, 0)
+    c = table_maker(model_name, device, 100, image_list, True, 1)
+    d = table_maker(model_name, device, 100, image_list, True, 2)
 
-    final = a + b + c + d + e
+    final = a + b + c + d
     df_results = pd.DataFrame(final)
 
     df_results.to_csv("../csv/results.csv", index=False)

@@ -1,6 +1,6 @@
 # IMPORTS
 
-from Experimentation.ea_base import *
+from ea_noise_channel import *
 
 from transformers import AutoModelForImageClassification, AutoProcessor, AutoImageProcessor
 import torch
@@ -40,7 +40,7 @@ image_list = ["../dog_images/0.jpg", "../dog_images/1.jpg", "../dog_images/2.jpg
 
 # TESTING ZONE
 
-def table_maker(model_name, device, enums, image_list, targeted, targeted_channel):
+def table_maker(model_name, device, enums, image_list, targeted_channel):
 
     # Set model
     model = timm.create_model(model_name, pretrained=True)
@@ -50,15 +50,15 @@ def table_maker(model_name, device, enums, image_list, targeted, targeted_channe
     # STABLE PARAMETERS
     enums = enums
     batch = 40
-    targeted = targeted
     targeted_channel = targeted_channel
     wanted_class = 0
     height = 0.15
     reach = 0.1
+    pourcentage = 1
 
     # CHANGING PARAMETERS
     changing_height = np.arange(0, 1.05, 0.05) # 20
-    changing_reach = np.arange(0, 1.05, 0.05) # 20
+    changing_reach = np.arange(0, 0.55, 0.05) # car le tensor neutre est rempli de 0.5
 
     # HEIGHT SECTION
     results = []
@@ -67,12 +67,11 @@ def table_maker(model_name, device, enums, image_list, targeted, targeted_channe
 
     for image_url in image_list:
         for ch in changing_height:
-            result = ea_base(model, enums, image_url, batch, targeted, targeted_channel, wanted_class, ch, reach, pourcentage, device)
+            result = ea_noise_channel(model, enums, image_url, batch, targeted_channel, wanted_class, ch, reach, pourcentage, device)
             
             results.append({
                                     "model": model_name,
                                     "image": image_url,
-                                    "targeted": targeted,
                                     "targeted_channel": targeted_channel,
                                     "height": ch,
                                     "reach": reach,
@@ -89,12 +88,11 @@ def table_maker(model_name, device, enums, image_list, targeted, targeted_channe
 
     for image_url in image_list:
         for cr in changing_reach:
-            result = ea_base(model, enums, image_url, batch, targeted, targeted_channel, wanted_class, height, cr, pourcentage, device)
+            result = ea_noise_channel(model, enums, image_url, batch, targeted_channel, wanted_class, height, cr, pourcentage, device)
             
             results.append({
                                     "model": model_name,
                                     "image": image_url,
-                                    "targeted": targeted,
                                     "targeted_channel": targeted_channel,
                                     "height": height,
                                     "reach": cr,
@@ -110,12 +108,11 @@ def table_maker(model_name, device, enums, image_list, targeted, targeted_channe
 
 
 for model_name in model_list:
-    a = table_maker(model_name, device, 100, image_list, False, 0)
-    b = table_maker(model_name, device, 100, image_list, True, 0)
-    c = table_maker(model_name, device, 100, image_list, True, 1)
-    d = table_maker(model_name, device, 100, image_list, True, 2)
+    a = table_maker(model_name, device, 100, image_list, 0)
+    b = table_maker(model_name, device, 100, image_list, 1)
+    c = table_maker(model_name, device, 100, image_list, 2)
 
-    final = a + b + c + d
+    final = a + b + c
     df_results = pd.DataFrame(final)
 
     df_results.to_csv("../csv/results.csv", index=False)
