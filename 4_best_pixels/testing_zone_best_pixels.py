@@ -1,6 +1,11 @@
 # IMPORTS
 
-from edge.ea_edges import *
+import sys
+import os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from tools import *
 
 from transformers import AutoModelForImageClassification, AutoProcessor, AutoImageProcessor
 import torch
@@ -36,31 +41,15 @@ model.eval()
 
 # TESTING ZONE
 
-# Test noise_generator_edge()
-
-# image = Image.open("../dog_images/9.jpg")
-# image = transformResize(image)
-# tensor_image = transformTensor(image).to(device)
-
-# group_tensor_image = multiple_copies_generator(tensor_image, 40, device)
-# print(group_tensor_image.shape)
-
-# group_tensor_image = noise_generator_edge(group_tensor_image, reach = 1, divider = 56, elite_matrices=400, blurry=False, blurriness=2, targeted=False, targeted_channel=0, device=device)
-# test_image = group_tensor_image[0]
-
-# image_restored = transformPIL(test_image)
-# plt.imshow(image_restored)
-# plt.axis("off")
-# plt.show()
- 
-
-
 image = Image.open("../dog_images/1.jpg")
 image = transformResize(image)
 
 tensor_image = transformTensor(image).to(device)
+
 batch_tensor_image = tensor_image.unsqueeze(0)
+
 proba_before = through_model(batch_tensor_image, model, device)
+
 print(proba_before)
 
 start1 = time.time()
@@ -81,8 +70,10 @@ list_probabilities = []
 start2 = time.time()
 
 for pr, rc in itertools.product(list_pourcentages, list_reach):
+
     modified_image = change_pixels(tensor_image, best_pixels_probabilities, pr, rc, device)
     batch_modified_image = modified_image.unsqueeze(0)
+
     proba_after = through_model(batch_modified_image, model, device)
     proba_after = proba_after[0, 0].item()
     list_probabilities.append((proba_after, pr, rc))
