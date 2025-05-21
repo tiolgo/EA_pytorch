@@ -40,17 +40,18 @@ model = model.eval()
 
 
 
-image = Image.open("../dog_images/7.jpg")
+image = Image.open("../dog_images/8.jpg")
 image = transformResize(image)
 
 tensor_image = transformTensor(image).to(device)
 
-zeros = torch.zeros_like(tensor_image[0])  # [H, W]
-tensor_image_R = torch.stack([tensor_image[2], zeros, zeros])
-tensor_image_G = torch.stack([zeros, tensor_image[2], zeros])
-tensor_image_B = torch.stack([zeros, zeros, tensor_image[2]])
+tensor_image = tensor_image.unsqueeze(0)
 
-image_restored = transformPIL(tensor_image_B)
+modified_image = noise_generator(tensor_image, 1, 0.2, False, 0, device)
+
+modified_image = modified_image.squeeze() # Pour le passer dans le model
+
+image_restored = transformPIL(modified_image)
 
 plt.imshow(image_restored)
 plt.axis("off")
