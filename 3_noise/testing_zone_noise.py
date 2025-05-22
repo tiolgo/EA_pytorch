@@ -54,10 +54,12 @@ def table_maker(model_name, device, enums, image_list):
     height = 0.15
     reach = 0.1
     pourcentage = 1
+    pourcentage_bruit = 0.5
 
     # CHANGING PARAMETERS
     changing_height = np.arange(0, 1.05, 0.05) # 20
     changing_reach = np.arange(0, 0.55, 0.05) # car le tensor neutre est rempli de 0.5
+    changing_pourcentage_noise = np.arange(0, 1.05, 0.05) # 20
 
     # HEIGHT SECTION
     results = []
@@ -66,13 +68,14 @@ def table_maker(model_name, device, enums, image_list):
 
     for image_url in image_list:
         for ch in changing_height:
-            result = ea_noise(model, enums, image_url, batch, wanted_class, ch, reach, pourcentage, device)
+            result = ea_noise(model, enums, image_url, batch, wanted_class, ch, reach, pourcentage, pourcentage_bruit, device)
             
             results.append({
                                     "model": model_name,
                                     "image": image_url,
                                     "height": ch,
                                     "reach": reach,
+                                    "pourcentage_bruit": pourcentage_bruit,
                                     "result": result
                                 })
 
@@ -86,13 +89,37 @@ def table_maker(model_name, device, enums, image_list):
 
     for image_url in image_list:
         for cr in changing_reach:
-            result = ea_noise(model, enums, image_url, batch, wanted_class, height, cr, pourcentage, device)
+            result = ea_noise(model, enums, image_url, batch, wanted_class, height, cr, pourcentage, pourcentage_bruit, device)
             
             results.append({
                                     "model": model_name,
                                     "image": image_url,
                                     "height": height,
                                     "reach": cr,
+                                    "pourcentage_bruit": pourcentage_bruit,
+                                    "result": result
+                                })
+
+    end = time.time()
+
+    print(f"Execution time: {end - start}s")
+
+    return results
+
+    # POURCENTAGE NOISE SECTION
+
+    start = time.time()
+
+    for image_url in image_list:
+        for cpn in changing_pourcentage_noise:
+            result = ea_noise(model, enums, image_url, batch, wanted_class, height, reach, pourcentage, cpn, device)
+            
+            results.append({
+                                    "model": model_name,
+                                    "image": image_url,
+                                    "height": height,
+                                    "reach": cr,
+                                    "pourcentage_bruit": cpn,
                                     "result": result
                                 })
 

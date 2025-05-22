@@ -53,7 +53,11 @@ modified_batch_image = noise_generator(batch_image, 1, 0.05, False, 0, device)
 
 modified_image = modified_batch_image[0]
 
-combined_image = (modified_image + tensor_image) / 2 # Pour le passer dans le model
+pourcentage_bruit = 0.1
+
+# combined_image = (modified_image + tensor_image) / 2 # Pour le passer dans le model
+
+combined_image = (modified_image * pourcentage_bruit) + (tensor_image * (1 - pourcentage_bruit))
 
 combined_image = combined_image.unsqueeze(0)
 
