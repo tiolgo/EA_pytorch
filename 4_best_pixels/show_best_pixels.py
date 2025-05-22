@@ -57,10 +57,9 @@ val_before, idx_before = torch.max(probability, dim=1)
 print(val_before, idx_before)
 
 
-
 best_pixels_probabilities = best_pixels(tensor_image, True, 0.0002, 286, model, device)
 
-modified_image = change_pixels(tensor_image, best_pixels_probabilities, 1, 0.05, device)
+modified_image = change_pixels(tensor_image, best_pixels_probabilities, 1, 0.05, device) # soucis
 
 modified_image = modified_image.unsqueeze(0)
 
