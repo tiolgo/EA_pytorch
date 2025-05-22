@@ -182,7 +182,7 @@ def table_maker(model_name, device, enums, image_list, blurry, blurriness, targe
 
 
 for model_name in model_list:
-    a = table_maker(model_name, device, 100, image_list, False, 0, False, 0)
+    a = table_maker(model_name, device, 100, image_list, False, 0, False, 0) # 5600
     b = table_maker(model_name, device, 100, image_list, False, 0, True, 0)
     c = table_maker(model_name, device, 100, image_list, False, 0, True, 1)
     d = table_maker(model_name, device, 100, image_list, False, 0, True, 2)

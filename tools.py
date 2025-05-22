@@ -23,6 +23,8 @@ transformPIL = transforms.ToPILImage()
 
 transformResize = transforms.Resize((224, 224))
 
+transformResizeFigma = transforms.Resize((32, 32))
+
 transformIn = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])  # Normalisation -> ImageNet
 ])
@@ -437,7 +439,8 @@ def change_pixels(tensor_image, best_pixels_probabilities, pourcentage, reach, d
   selection_of_pixels = sorted_probabilities[:size]
 
   for pixel in selection_of_pixels:
-      tensor_image[pixel[2],pixel[3], pixel[4]] += (pixel[1] * reach)
+      print(pixel[2], pixel[3], pixel[4])
+      tensor_image[pixel[2], pixel[3], pixel[4]] += (pixel[1] * reach)
 
   return tensor_image
 

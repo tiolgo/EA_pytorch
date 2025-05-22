@@ -56,7 +56,7 @@ def ea_base(model, enums, image_url, batch, targeted, targeted_channel, wanted_c
     top_selection = torch.cat((elite_selection, middle_selection))
 
     # 20 -> new noises
-    noise_selection = noise_generator(multiple_copies, pourcentage, reach, targeted, targeted_channel, device)
+    noise_selection = noise_generator(base_images, pourcentage, reach, targeted, targeted_channel, device)
 
     # 20 -> crossover
     parents_index = parent_generator_fixed(top_selection, device)

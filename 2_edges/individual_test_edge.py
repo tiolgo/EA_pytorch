@@ -1,11 +1,6 @@
 # IMPORTS
 
-import sys
-import os
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from tools import *
+from ea_edges import *
 
 from transformers import AutoModelForImageClassification, AutoProcessor, AutoImageProcessor
 import torch
@@ -34,25 +29,19 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
 # Set model
-model = timm.create_model('resnet50.tv_in1k', pretrained=True)
+model = timm.create_model('vgg16.tv_in1k', pretrained=True)
 model = model.to(device)
 model = model.eval()
 
+# TESTING ZONE
 
+start = time.time()
 
-image = Image.open("dog_images/8.jpg")
-image = transformResize(image)
+result = ea_edges_v3(model, 100, '../dog_images/0.jpg', 40, False, 4, False, 1, 285, 1, 0.1, 
+                False, 56, 32, 0.5, device)
 
-tensor_image = transformTensor(image).to(device)
+end = time.time()
 
-tensor_image = tensor_image.unsqueeze(0)
+print(f"Execution time: {end - start}s")
 
-modified_image = noise_generator(tensor_image, 0.1, 0.5, False, 0, device)
-
-modified_image = modified_image.squeeze() # Pour le passer dans le model
-
-image_restored = transformPIL(modified_image)
-
-plt.imshow(image_restored)
-plt.axis("off")
-plt.show()
+print(result)
