@@ -104,8 +104,6 @@ def table_maker(model_name, device, enums, image_list):
 
     print(f"Execution time: {end - start}s")
 
-    return results
-
     # POURCENTAGE NOISE SECTION
 
     start = time.time()

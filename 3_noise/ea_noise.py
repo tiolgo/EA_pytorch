@@ -19,7 +19,7 @@ import numpy as np
 import sys
 import math
 
-def ea_noise(model, enums, image_url, batch, wanted_class, height, reach, pourcentage, device):
+def ea_noise(model, enums, image_url, batch, wanted_class, height, reach, pourcentage, pourcentage_bruit, device):
   
   # WITH ADDITIONAL NOISE -> ADS UP
 
@@ -72,7 +72,8 @@ def ea_noise(model, enums, image_url, batch, wanted_class, height, reach, pource
     probabilities = through_model(noise_copies, model, device)
     elite_selection, middle_selection, elite_index, elite_proba = selection(noise_copies, probabilities, elite, wanted_class, device)
 
-    combined_images = (noise_copies + base_images) / 2
+    # combined_images = (noise_copies + base_images) / 2
+    combined_images = (noise_copies * pourcentage_bruit) + (base_images * (1 - pourcentage_bruit))
     probabilities_combined = through_model(combined_images, model, device)
     elite_selection_combined, middle_selection_combined, elite_index_combined, elite_proba_combined = selection(combined_images, probabilities_combined, elite, wanted_class, device)
     

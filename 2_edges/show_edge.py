@@ -40,14 +40,14 @@ model = model.eval()
 
 
 
-image = Image.open("../dog_images/3.jpg")
+image = Image.open("../dog_images/7.jpg")
 image = transformResize(image)
 
 tensor_image = transformTensor(image).to(device)
 
 batch_image = multiple_copies_generator(tensor_image, 40, device)
 
-modified_batch_image = noise_generator_edge(batch_image, 0.5, 56, 300, False, 0, False, 0, device)
+modified_batch_image = noise_generator_edge(batch_image, 0.5, 56, 314, False, 0, False, 0, device)
 
 modified_image = modified_batch_image[0].unsqueeze(0) # Pour le passer dans le model
 

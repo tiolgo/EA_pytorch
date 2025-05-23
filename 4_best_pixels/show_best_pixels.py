@@ -34,13 +34,13 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
 # Set model
-model = timm.create_model('resnet50.tv_in1k', pretrained=True)
+model = timm.create_model('vgg16.tv_in1k', pretrained=True)
 model = model.to(device)
 model = model.eval()
 
 
 
-image = Image.open("../dog_images/1.jpg")
+image = Image.open("../dog_images/7.jpg")
 
 image = transformResize(image)
 
@@ -56,10 +56,15 @@ val_before, idx_before = torch.max(probability, dim=1)
 
 print(val_before, idx_before)
 
+start = time.time()
 
-best_pixels_probabilities = best_pixels(tensor_image, True, 0.0002, 286, model, device)
+best_pixels_probabilities = best_pixels(tensor_image, True, 1, 2, model, device)
 
-modified_image = change_pixels(tensor_image, best_pixels_probabilities, 1, 0.05, device) # soucis
+end = time.time()
+
+print(f'{end-start}s')
+
+modified_image = change_pixels(tensor_image, best_pixels_probabilities, 0.01, 0.5, device) # soucis
 
 modified_image = modified_image.unsqueeze(0)
 

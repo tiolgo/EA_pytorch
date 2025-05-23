@@ -437,10 +437,11 @@ def change_pixels(tensor_image, best_pixels_probabilities, pourcentage, reach, d
 
   sorted_probabilities = sorted(best_pixels_probabilities, key=lambda x: x[0], reverse=True)
   selection_of_pixels = sorted_probabilities[:size]
-
+  
   for pixel in selection_of_pixels:
-      print(pixel[2], pixel[3], pixel[4])
       tensor_image[pixel[2], pixel[3], pixel[4]] += (pixel[1] * reach)
+  
+  tensor_image = torch.clamp(tensor_image, 0.0, 1.0)
 
   return tensor_image
 
