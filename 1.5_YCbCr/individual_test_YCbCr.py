@@ -1,11 +1,11 @@
 # IMPORTS
-
 import sys
 import os
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../1_base')))
 
-from tools import *
+from ea_base import *
+from ea_YCbCr import *
 
 from transformers import AutoModelForImageClassification, AutoProcessor, AutoImageProcessor
 import torch
@@ -38,29 +38,28 @@ model = timm.create_model('resnet50.tv_in1k', pretrained=True)
 model = model.to(device)
 model = model.eval()
 
+# TESTING ZONE
 
 
-image = Image.open("../dog_images/0.jpg")
-image = transformResize(image)
+# STABLE PARAMETERS
 
-tensor_image = transformTensor(image).to(device)
+start = time.time()
 
-tensor_image = tensor_image.unsqueeze(0)
+result = ea_base_VF(model, 1000, "../dog_images/0.jpg", 40, False, 0, 3, 0.15, 0.03, 0.01, device)
 
-coord_list = find_best_patch(tensor_image, 56, 800, False, 0, device)
+end = time.time()
 
-tensor_image_mutated = noise_generator_patch(tensor_image, coord_list, 0.1, 0.5, device)
+print(f"Execution time: {end - start}s")
 
-probability = through_model(tensor_image_mutated, model, device)
- 
-val, idx = torch.max(probability, dim=1)
+print(result)
 
-print(val, idx)
 
-modified_image = tensor_image_mutated.squeeze()
+start = time.time()
 
-image_restored = transformPIL(modified_image)
+result = ea_YCbCr_VF(model, 1000, "../dog_images/0.jpg", 40, False, 0, 3, 0.15, 0.03, 0.01, device)
 
-plt.imshow(image_restored)
-plt.axis("off")
-plt.show()
+end = time.time()
+
+print(f"Execution time: {end - start}s")
+
+print(result)

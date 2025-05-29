@@ -1,6 +1,6 @@
 # IMPORTS
 
-from ea_edges import *
+from best_pixels_algo import *
 
 from transformers import AutoModelForImageClassification, AutoProcessor, AutoImageProcessor
 import torch
@@ -38,24 +38,4 @@ model = model.eval()
 
 # STABLE PARAMETERS
 
-start = time.time()
-
-result = ea_edges_VF(model, 100, '../dog_images/0.jpg', 40, False, 4, False, 1, 3, 0.01, 0.3, 0.03, 
-                False, 56, 700, 0.5, device)
-
-end = time.time()
-
-print(f"Execution time: {end - start}s")
-
-print(result)
-
-start = time.time()
-
-result = ea_edges_v4(model, 100, '../dog_images/0.jpg', 40, False, 4, False, 1, 3, 0.3, 0.03, 
-                False, 56, 700, 0.5, device)
-
-end = time.time()
-
-print(f"Execution time: {end - start}s")
-
-print(result)
+best_pixels_algo(model, 1, "../dog_images/0.jpg", 285, 0.1, 0.2, device)

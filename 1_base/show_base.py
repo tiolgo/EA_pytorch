@@ -25,8 +25,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 import timm
 
-
-
 # INITIALISATION
 
 # Set the device
@@ -34,30 +32,26 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
 # Set model
-model = timm.create_model('resnet50.tv_in1k', pretrained=True)
+model = timm.create_model('resnet18.tv_in1k', pretrained=True)
 model = model.to(device)
 model = model.eval()
 
-
-
-image = Image.open("../dog_images/1.jpg")
+image = Image.open("../dog_images/0.jpg")
 image = transformResize(image)
 
 tensor_image = transformTensor(image).to(device)
 
-batch_image = multiple_copies_generator(tensor_image, 40, device)
+tensor_image = tensor_image.unsqueeze(0)
 
-modified_batch_image = noise_generator(batch_image, 1, 0.5, False, 0, device)
+tensor_image_mutated = noise_generator(tensor_image, 1, 0.1, False, 0, device)
 
-modified_image = modified_batch_image[0].unsqueeze(0) # Pour le passer dans le model
-
-probability = through_model(modified_image, model, device)
-
+probability = through_model(tensor_image_mutated, model, device)
+ 
 val, idx = torch.max(probability, dim=1)
 
 print(val, idx)
 
-modified_image = modified_image.squeeze()
+modified_image = tensor_image_mutated.squeeze()
 
 image_restored = transformPIL(modified_image)
 

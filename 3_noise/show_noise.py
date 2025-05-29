@@ -25,8 +25,6 @@ from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 import timm
 
-
-
 # INITIALISATION
 
 # Set the device
@@ -34,35 +32,39 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
 # Set model
-model = timm.create_model('resnet50.tv_in1k', pretrained=True)
+model = timm.create_model('resnet18.tv_in1k', pretrained=True)
 model = model.to(device)
 model = model.eval()
 
+reach = 0.03
 
-
-image = Image.open("../dog_images/1.jpg")
+image = Image.open("../dog_images/0.jpg")
 image = transformResize(image)
 
 tensor_image = transformTensor(image).to(device)
 
-tensor_neutral = torch.full((3, 224, 224), 0.5, device='cuda')
+base_image = tensor_image.clone()
 
-batch_image = multiple_copies_generator(tensor_neutral, 40, device)
+tensor_image = torch.full((3, 224, 224), reach, device='cuda')
 
-modified_batch_image = noise_generator(batch_image, 1, 0.05, False, 0, device)
+tensor_image = tensor_image.unsqueeze(0)
 
-modified_image = modified_batch_image[0]
+tensor_image_mutated = noise_generator(tensor_image, 1, reach, False, 0, device)
 
-pourcentage_bruit = 0.1
+probability = through_model(tensor_image_mutated, model, device)
+ 
+val, idx = torch.max(probability, dim=1)
 
-# combined_image = (modified_image + tensor_image) / 2 # Pour le passer dans le model
+print(val, idx)
 
-combined_image = (modified_image * pourcentage_bruit) + (tensor_image * (1 - pourcentage_bruit))
+modified_image = tensor_image_mutated.squeeze()
+
+combined_image = modified_image + (base_image * (1 - 2 * reach))
 
 combined_image = combined_image.unsqueeze(0)
 
 probability = through_model(combined_image, model, device)
-
+ 
 val, idx = torch.max(probability, dim=1)
 
 print(val, idx)

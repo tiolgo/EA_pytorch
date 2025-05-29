@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import random
 import numpy as np
 import sys
+import time
 import math
 import itertools
 
@@ -101,9 +102,8 @@ def noise_generator(multiple_copies, pourcentage, reach, targeted, targeted_chan
       pixel_y = remainder % width
 
       for b in range(batch_size):
-        for c in range(channels):
-          values_to_change = torch.empty(pixels_to_change).uniform_(-reach, reach).to(device)
-          multiple_copies[b, c, pixel_x, pixel_y] += values_to_change
+        values_to_change = torch.empty(pixels_to_change).uniform_(-reach, reach).to(device)
+        multiple_copies[b, pixel_c, pixel_x, pixel_y] += values_to_change
 
     return multiple_copies.clamp_(0, 1)
 
@@ -208,7 +208,157 @@ def noise_generator_edge(multiple_copies, reach, divider, elite_matrices, blurry
 
 
 
+def find_best_patch_RGB(multiple_copies, divider, elite_matrices, targeted, targeted_channel, device): # reach = 0.1  ->  -0.1 <= x <= 0.1
 
+    batch_size, channels, height, width = multiple_copies.shape
+
+    multiple_copies = multiple_copies.clone().to(device)
+
+    image = multiple_copies[0]
+
+    # Convolution matrices
+    sobel_horizontal = torch.tensor([[-1, -2, -1], [0, 0, 0], [1, 2, 1]], dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(device)
+    sobel_vertical = torch.tensor([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(device)
+    sobel_diagonal1 = torch.tensor([[0, 1, 2],
+                                    [-1, 0, 1],
+                                    [-2, -1, 0]], dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(device)
+
+    sobel_diagonal2 = torch.tensor([[2, 1, 0],
+                                    [1, 0, -1],
+                                    [0, -1, -2]], dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(device)
+
+
+
+    sub_matrix_size = int(height/divider) # exemple -> 224/7 => 32; 7x7 => 49 matrices of 32x32 pixels in the 224x224 image
+
+    coord_list = []
+
+    if targeted: channels = 1
+
+    for c in range(channels): # I take each channels to evaluate them individually
+
+      if targeted: c = targeted_channel # Rather than having x matrices changed per channel we have x*3 matrices changed for the targeted channel
+
+      sub_matrices = []
+      sub_scores = []
+
+      for h in range(divider): # height iteration
+          for w in range(divider): # width iteration
+
+              sub_matrix = image[c, h*sub_matrix_size:(h+1)*sub_matrix_size, w*sub_matrix_size:(w+1)*sub_matrix_size]
+              sub_matrices.append(sub_matrix)
+
+              score_horizontal = apply_convolution(sub_matrix, sobel_horizontal).abs().sum().item()
+              score_vertical = apply_convolution(sub_matrix, sobel_vertical).abs().sum().item()
+              score_diagonal1 = apply_convolution(sub_matrix, sobel_diagonal1).abs().sum().item()
+              score_diagonal2 = apply_convolution(sub_matrix, sobel_diagonal2).abs().sum().item()
+
+              score_total = score_horizontal + score_vertical + score_diagonal1 + score_diagonal2
+
+              sub_scores.append(score_total)
+
+      top_indices = torch.topk(torch.tensor(sub_scores, device=device), elite_matrices).indices
+
+      for index in top_indices:
+          zone_h = index // divider
+          zone_w = index % divider
+
+          for i in range(sub_matrix_size):
+              for j in range(sub_matrix_size):
+                  x = zone_h * sub_matrix_size + i
+                  y = zone_w * sub_matrix_size + j
+                  coord_list.append((c, x, y))
+
+    coord_tensor = torch.tensor(coord_list, dtype=torch.long, device=device)
+    return coord_tensor
+
+
+def find_best_patch(multiple_copies, divider, elite_matrices, targeted, targeted_channel, device): # reach = 0.1  ->  -0.1 <= x <= 0.1
+
+    batch_size, channels, height, width = multiple_copies.shape
+
+    multiple_copies = multiple_copies.clone().to(device)
+
+    image = multiple_copies[0]
+
+    # Convolution matrices
+    sobel_horizontal = torch.tensor([[-1, -2, -1], [0, 0, 0], [1, 2, 1]], dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(device)
+    sobel_vertical = torch.tensor([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(device)
+    sobel_diagonal1 = torch.tensor([[0, 1, 2],
+                                    [-1, 0, 1],
+                                    [-2, -1, 0]], dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(device)
+
+    sobel_diagonal2 = torch.tensor([[2, 1, 0],
+                                    [1, 0, -1],
+                                    [0, -1, -2]], dtype=torch.float32).unsqueeze(0).unsqueeze(0).to(device)
+
+
+
+    sub_matrix_size = int(height/divider) # exemple -> 224/7 => 32; 7x7 => 49 matrices of 32x32 pixels in the 224x224 image
+
+    coord_list = []
+    sub_scores = []
+
+    if targeted: channels = 1
+
+    for c in range(channels): # I take each channels to evaluate them individually
+
+      if targeted: c = targeted_channel # Rather than having x matrices changed per channel we have x*3 matrices changed for the targeted channel
+
+      sub_matrices = []
+
+      for h in range(divider): # height iteration
+          for w in range(divider): # width iteration
+
+              sub_matrix = image[c, h*sub_matrix_size:(h+1)*sub_matrix_size, w*sub_matrix_size:(w+1)*sub_matrix_size]
+              sub_matrices.append(sub_matrix)
+
+              score_horizontal = apply_convolution(sub_matrix, sobel_horizontal).abs().sum().item()
+              score_vertical = apply_convolution(sub_matrix, sobel_vertical).abs().sum().item()
+              score_diagonal1 = apply_convolution(sub_matrix, sobel_diagonal1).abs().sum().item()
+              score_diagonal2 = apply_convolution(sub_matrix, sobel_diagonal2).abs().sum().item()
+
+              score_total = score_horizontal + score_vertical + score_diagonal1 + score_diagonal2
+
+              sub_scores.append(score_total)
+
+    top_indices = torch.topk(torch.tensor(sub_scores, device=device), (elite_matrices * 3)).indices
+
+    for index in top_indices:
+        c = index // (divider * divider)
+        relative_index = index % (divider * divider)
+        zone_h = relative_index // divider
+        zone_w = relative_index % divider
+
+        for i in range(sub_matrix_size):
+            for j in range(sub_matrix_size):
+                x = zone_h * sub_matrix_size + i
+                y = zone_w * sub_matrix_size + j
+                coord_list.append((c, x, y))
+
+    coord_tensor = torch.tensor(coord_list, dtype=torch.long, device=device)
+    return coord_tensor
+
+
+def noise_generator_patch(multiple_copies, coord_tensor, pourcentage, reach, device):
+    batch_size, _, _, _ = multiple_copies.shape
+    multiple_copies = multiple_copies.clone().to(device)
+
+    total_coords = coord_tensor.shape[0]
+    num_pixels_to_change = int(total_coords * pourcentage)
+
+    indices = torch.randperm(total_coords, device=device)[:num_pixels_to_change]
+    sampled_coords = coord_tensor[indices]
+    c = sampled_coords[:, 0]
+    x = sampled_coords[:, 1]
+    y = sampled_coords[:, 2]
+
+    noise = torch.empty((batch_size, num_pixels_to_change), device=device).uniform_(-reach, reach)
+
+    for b in range(batch_size):
+        multiple_copies[b].index_put_((c, x, y), noise[b], accumulate=True)
+
+    return multiple_copies.clamp_(0, 1)
 
 
 def parent_generator_fixed(multiple_copies, device):
@@ -229,7 +379,7 @@ def crossover_generator(multiple_copies, parents_index, pourcentage_height, devi
     max_size_square = int(multiple_copies.shape[3] * pourcentage_height)  # % hauteur de l'image -> multiple_copies[0].shape[2] prend le nombre de pixel d'une image
 
     # Swaping zone setting
-    which_channel = torch.randint(0, channels, (1,)).to(device)
+    which_channel = torch.randint(0, channels, ()).to(device)
     size_height = torch.randint(0, max_size_square + 1, (1,)).to(device)
     start_height = torch.randint(0, height - size_height + 1, (1,)).to(device)
     size_width = torch.randint(0, max_size_square + 1, (1,)).to(device)
@@ -309,6 +459,7 @@ def selection(multiple_copies, probabilities, elite, wanted_class, device):
 
     #return elite_selection, middle_selection, low_selection, elite_index, elite_proba
     return elite_selection, middle_selection, elite_index, elite_proba
+   
 
 def from_rgb_to_ycbcr(tensor_image, device):
     transform_matrix = torch.tensor([[0.299, 0.587, 0.114],
@@ -317,10 +468,26 @@ def from_rgb_to_ycbcr(tensor_image, device):
 
     tensor_image_ycbcr = torch.matmul(transform_matrix, tensor_image.view(3, -1)).to(device)
 
-    # Reshape to have the original pytorch shape for images
     tensor_image_ycbcr = tensor_image_ycbcr.view(3, tensor_image.shape[1], tensor_image.shape[2])
 
     return tensor_image_ycbcr
+
+def from_rgb_to_ycbcr_batch(tensor_images, device):
+
+    B, C, H, W = tensor_images.shape
+
+    transform_matrix = torch.tensor([[0.299, 0.587, 0.114],
+                                     [-0.169, -0.331, 0.499],
+                                     [0.499, -0.460, -0.039]], device=device)
+
+    images_flat = tensor_images.permute(0, 2, 3, 1).reshape(-1, 3)
+
+    ycbcr_flat = images_flat @ transform_matrix.T 
+
+    ycbcr = ycbcr_flat.view(B, H, W, 3).permute(0, 3, 1, 2)
+
+    return ycbcr
+
 
 def from_ycbcr_to_rgb(tensor_image_ycbcr, device):
     inverse_transform_matrix = torch.tensor([[1.0,  0.0,  1.402],
@@ -329,10 +496,26 @@ def from_ycbcr_to_rgb(tensor_image_ycbcr, device):
 
     tensor_image_rgb = torch.matmul(inverse_transform_matrix, tensor_image_ycbcr.view(3, -1)).to(device)
 
-    # Remettre à la forme image (C, H, W)
     tensor_image_rgb = tensor_image_rgb.view(3, tensor_image_ycbcr.shape[1], tensor_image_ycbcr.shape[2])
 
     return tensor_image_rgb
+
+def from_ycbcr_to_rgb_batch(tensor_images_ycbcr, device):
+
+    B, C, H, W = tensor_images_ycbcr.shape
+
+    inverse_transform_matrix = torch.tensor([[1.0,  0.0,      1.402],
+                                             [1.0, -0.344136, -0.714136],
+                                             [1.0,  1.772,    0.0]], device=device)
+
+    images_flat = tensor_images_ycbcr.permute(0, 2, 3, 1).reshape(-1, 3)
+
+    rgb_flat = images_flat @ inverse_transform_matrix.T
+
+    rgb = rgb_flat.view(B, H, W, 3).permute(0, 3, 1, 2)
+
+    return rgb
+
 
 def checker(elite_index, elite_proba, threshold):
 

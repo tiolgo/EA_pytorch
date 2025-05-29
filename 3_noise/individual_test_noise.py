@@ -1,6 +1,6 @@
 # IMPORTS
 
-from ea_edges import *
+from ea_noise import *
 
 from transformers import AutoModelForImageClassification, AutoProcessor, AutoImageProcessor
 import torch
@@ -40,8 +40,7 @@ model = model.eval()
 
 start = time.time()
 
-result = ea_edges_VF(model, 100, '../dog_images/0.jpg', 40, False, 4, False, 1, 3, 0.01, 0.3, 0.03, 
-                False, 56, 700, 0.5, device)
+result = ea_noise_mask_only(model, 1000, 40, False, 0, 285, 0.15, 0.06, 0.05, device)
 
 end = time.time()
 
@@ -51,8 +50,27 @@ print(result)
 
 start = time.time()
 
-result = ea_edges_v4(model, 100, '../dog_images/0.jpg', 40, False, 4, False, 1, 3, 0.3, 0.03, 
-                False, 56, 700, 0.5, device)
+result = ea_noise_mask_only(model, 1000, 40, False, 0, 296, 0.15, 0.06, 0.05, device)
+
+end = time.time()
+
+print(f"Execution time: {end - start}s")
+
+print(result)
+
+start = time.time()
+
+result = ea_noise_mask_only(model, 1000, 40, False, 0, 621, 0.15, 0.06, 0.05, device)
+
+end = time.time()
+
+print(f"Execution time: {end - start}s")
+
+print(result)
+
+start = time.time()
+
+result = ea_noise_mask_only(model, 1000, 40, False, 0, 3, 0.15, 0.06, 0.05, device)
 
 end = time.time()
 

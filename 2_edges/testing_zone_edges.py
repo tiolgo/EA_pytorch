@@ -54,9 +54,10 @@ def table_maker(model_name, device, enums, image_list, blurry, blurriness, targe
     blurriness = blurriness
     targeted = targeted
     targeted_channel = targeted_channel
-    wanted_class = 0
+    wanted_class = 285
+    pourcentage = 0.01
     height = 0.15
-    reach = 0.1
+    reach = 0.03
     manual = False
     divider = 7
     elite_matrices = 20
@@ -65,17 +66,18 @@ def table_maker(model_name, device, enums, image_list, blurry, blurriness, targe
     # CHANGING PARAMETERS
     changing_height = np.arange(0, 1.05, 0.05) # 20
     changing_reach = np.arange(0, 0.105, 0.005) # 20
-    changing_divider = [1, 2, 4, 7, 8, 14, 16, 28, 32, 56] # 10 56 is th maximum because de bluriness is set to 4
+    changing_divider = [1, 2, 4, 7, 8, 14, 16, 28, 32, 56] # 10 56 is th maximum because de kernel is 3x3
     changing_min_pourcentage = np.arange(0, 1.05, 0.05) # 20
 
     # HEIGHT SECTION
+
     results = []
 
     start = time.time()
 
     for image_url in image_list:
         for ch in changing_height:
-            result = ea_edges_v3(model, enums, image_url, batch, blurry, blurriness, targeted, targeted_channel, wanted_class, ch, reach, 
+            result = ea_edges_VF(model, enums, image_url, batch, blurry, blurriness, targeted, targeted_channel, wanted_class, pourcentage, ch, reach, 
                     manual, divider, elite_matrices, min_pourcentage, device)
             
             results.append({
@@ -102,7 +104,7 @@ def table_maker(model_name, device, enums, image_list, blurry, blurriness, targe
 
     for image_url in image_list:
         for cr in changing_reach:
-            result = ea_edges_v3(model, enums, image_url, batch, blurry, blurriness, targeted, targeted_channel, wanted_class, height, cr, 
+            result = ea_edges_VF(model, enums, image_url, batch, blurry, blurriness, targeted, targeted_channel, wanted_class, pourcentage, height, cr, 
                     manual, divider, elite_matrices, min_pourcentage, device)
             
             results.append({
@@ -129,7 +131,7 @@ def table_maker(model_name, device, enums, image_list, blurry, blurriness, targe
 
     for image_url in image_list:
         for cd in changing_divider:
-            result = ea_edges_v3(model, enums, image_url, batch, blurry, blurriness, targeted, targeted_channel, wanted_class, height, reach, 
+            result = ea_edges_VF(model, enums, image_url, batch, blurry, blurriness, targeted, targeted_channel, wanted_class, pourcentage, height, reach, 
                     manual, cd, elite_matrices, min_pourcentage, device)
             
             results.append({
@@ -156,8 +158,8 @@ def table_maker(model_name, device, enums, image_list, blurry, blurriness, targe
 
     for image_url in image_list:
         for cmp in changing_min_pourcentage:
-            result = ea_edges_v3(model, enums, image_url, batch, blurry, blurriness, targeted, targeted_channel, wanted_class, height, reach, 
-                    manual, divider, elite_matrices, cmp, device)
+            result = ea_edges_VF(model, enums, image_url, batch, blurry, blurriness, targeted, targeted_channel, wanted_class, pourcentage, ch, reach, 
+                    manual, divider, elite_matrices, min_pourcentage, device)
             
             results.append({
                                     "model": model_name,

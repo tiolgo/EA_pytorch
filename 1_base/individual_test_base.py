@@ -1,11 +1,6 @@
 # IMPORTS
-import sys
-import os
-
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../2_edges')))
 
 from ea_base import *
-from ea_edges import *
 
 from transformers import AutoModelForImageClassification, AutoProcessor, AutoImageProcessor
 import torch
@@ -34,7 +29,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
 # Set model
-model = timm.create_model('resnet101.tv_in1k', pretrained=True)
+model = timm.create_model('resnet50.tv_in1k', pretrained=True)
 model = model.to(device)
 model = model.eval()
 
@@ -45,7 +40,7 @@ model = model.eval()
 
 start = time.time()
 
-result = ea_base(model, 200, '../dog_images/1.jpg', 40, False, 0, 285, 0.15, 0.1, 0.5, device)
+result = ea_base_VF(model, 100, "../dog_images/0.jpg", 40, False, 0, 285, 0.15, 0.03, 0.01, device)
 
 end = time.time()
 
@@ -55,8 +50,7 @@ print(result)
 
 start = time.time()
 
-result = ea_edges_v3(model, 200, '../dog_images/1.jpg', 40, False, 4, False, 1, 285, 0.15, 0.1, 
-                False, 56, 32, 0.5, device)
+result = ea_base_colab(model, 100, "../dog_images/0.jpg", 40, False, 0, 285, 0.15, 0.01, 1, device)
 
 end = time.time()
 

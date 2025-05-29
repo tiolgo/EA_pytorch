@@ -32,7 +32,8 @@ model = timm.create_model('vgg16.tv_in1k', pretrained=True)
 model = model.to(device)
 model = model.eval()
 
-model_list = ['vgg16.tv_in1k', 'vgg19.tv_in1k', 'resnet50.tv_in1k', 'resnet101.tv_in1k', 'resnet152.tv_in1k', 'densenet121.tv_in1k', 'densenet169.tv_in1k', 'densenet201.tv_in1k']
+# model_list = ['vgg16.tv_in1k', 'vgg19.tv_in1k', 'resnet50.tv_in1k', 'resnet101.tv_in1k', 'resnet152.tv_in1k', 'densenet121.tv_in1k', 'densenet169.tv_in1k', 'densenet201.tv_in1k']
+model_list = ['resnet50.tv_in1k']
 image_list = ["../dog_images/0.jpg", "../dog_images/1.jpg", "../dog_images/2.jpg", "../dog_images/3.jpg", "../dog_images/4.jpg", "../dog_images/5.jpg",
               "../dog_images/6.jpg", "../dog_images/7.jpg", "../dog_images/8.jpg", "../dog_images/9.jpg"]
 
@@ -53,14 +54,14 @@ def table_maker(model_name, device, enums, image_list, targeted, targeted_channe
     targeted = targeted
     targeted_channel = targeted_channel
     wanted_class = 0
-    height = 0.15
-    reach = 0.1
-    pourcentage = 0.5
+    height = 0.10
+    reach = 0.05
+    pourcentage = 0.05
 
     # CHANGING PARAMETERS
-    changing_height = np.arange(0, 1.05, 0.05) # 20
-    changing_reach = np.arange(0, 0.105, 0.005) # 20
-    changing_pourcentage = np.arange(0, 1.05, 0.05) # 20
+    changing_height = np.arange(0, 0.25, 0.05) # 4
+    changing_reach = np.arange(0, 0.11, 0.01) # 10
+    changing_pourcentage = np.arange(0, 0.11, 0.01) # 10
 
     # HEIGHT SECTION
     results = []
