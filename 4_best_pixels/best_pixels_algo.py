@@ -25,37 +25,61 @@ from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
 import timm
 
-def best_pixels_algo(model, max_epoch, image_path, wanted_class, pourcentage, reach, device):
+def best_pixels_algo(model, tensor_image, wanted_class, pourcentage_total, pourcentage, reach, device):
 
-    image = Image.open(image_path)
-    image = transformResize(image)
-    tensor_image = transformTensor(image).to(device)
+    # image = Image.open(image_path)
+    # image = transformResize(image)
+    # tensor_image = transformTensor(image).to(device)
 
 
     start = time.time()
 
-    best_pixels_probabilities = best_pixels(tensor_image, False, 1, wanted_class, model, device)
+    best_pixels_probabilities = best_pixels(tensor_image, True, pourcentage_total, wanted_class, model, device)
 
     end = time.time()
 
     print(f'{end-start}s')
 
-    for _ in range(max_epoch):
+    tensor_image = change_pixels(tensor_image, best_pixels_probabilities, pourcentage, reach, device)
 
-        modified_image = change_pixels(tensor_image, best_pixels_probabilities, pourcentage, reach, device)
+    tensor_image = tensor_image.unsqueeze(0)
 
-        modified_image = modified_image.unsqueeze(0)
+    probabilities = through_model(tensor_image, model, device)
 
-        probabilities = through_model(modified_image, model, device)
+    probability = probabilities[:, wanted_class]
 
-        probability = probabilities[:, wanted_class]
+    print(probability)
 
-        print(probability)
+    tensor_image = tensor_image.squeeze()
 
-        modified_image = modified_image.squeeze()
+    return tensor_image, probability
 
-    image_restored = transformPIL(modified_image)
 
-    plt.imshow(image_restored)
-    plt.axis("off")
-    plt.show()
+def fixed_best_pixels_algo(model, tensor_image, random_pixels, wanted_class, pourcentage, reach, device):
+
+    # image = Image.open(image_path)
+    # image = transformResize(image)
+    # tensor_image = transformTensor(image).to(device)
+
+
+    start = time.time()
+
+    best_pixels_probabilities = fixed_best_pixels(tensor_image, random_pixels, wanted_class, model, device)
+
+    end = time.time()
+
+    print(f'{end-start}s')
+
+    tensor_image = change_pixels(tensor_image, best_pixels_probabilities, pourcentage, reach, device)
+
+    tensor_image = tensor_image.unsqueeze(0)
+
+    probabilities = through_model(tensor_image, model, device)
+
+    probability = probabilities[:, wanted_class]
+
+    print(probability)
+
+    tensor_image = tensor_image.squeeze()
+
+    return tensor_image, probability

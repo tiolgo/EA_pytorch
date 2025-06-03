@@ -40,7 +40,7 @@ model = model.eval()
 
 start = time.time()
 
-result = ea_noise_mask_only(model, 1000, 40, False, 0, 285, 0.15, 0.06, 0.05, device)
+result = ea_noise_mask_only(model, 10000, 40, False, 0, 285, 0.15, 0.06, 0.01, device)
 
 end = time.time()
 
@@ -50,7 +50,7 @@ print(result)
 
 start = time.time()
 
-result = ea_noise_mask_only(model, 1000, 40, False, 0, 296, 0.15, 0.06, 0.05, device)
+result = ea_noise_mask_only(model, 10000, 40, False, 0, 296, 0.15, 0.06, 0.01, device)
 
 end = time.time()
 
@@ -60,7 +60,7 @@ print(result)
 
 start = time.time()
 
-result = ea_noise_mask_only(model, 1000, 40, False, 0, 621, 0.15, 0.06, 0.05, device)
+result = ea_noise_mask_only(model, 10000, 40, False, 0, 621, 0.15, 0.06, 0.01, device)
 
 end = time.time()
 
@@ -70,7 +70,27 @@ print(result)
 
 start = time.time()
 
-result = ea_noise_mask_only(model, 1000, 40, False, 0, 3, 0.15, 0.06, 0.05, device)
+result = ea_noise_mask_only(model, 10000, 40, False, 0, 13, 0.15, 0.06, 0.01, device)
+
+end = time.time()
+
+print(f"Execution time: {end - start}s")
+
+print(result)
+
+start = time.time()
+
+result = ea_noise_mask_only(model, 10000, 40, False, 0, 621, 0.15, 0.25, 0.01, device)
+
+end = time.time()
+
+print(f"Execution time: {end - start}s")
+
+print(result)
+
+start = time.time()
+
+result = ea_noise_mask_only(model, 10000, 40, False, 0, 621, 0.15, 0.5, 0.01, device)
 
 end = time.time()
 

@@ -35,31 +35,29 @@ model = model.eval()
 
 # TESTING ZONE
 
+image = Image.open( "../dog_images/0.jpg")
+image = transformResize(image)
+tensor_image = transformTensor(image).to(device)
+
 results = []
-labels = [56, 298, 471, 613, 820]
-images_path = ["../dog_images/4.jpg"]
 
 
 # STABLE PARAMETERS
-for image_path in images_path:
-    for label in labels:
 
-        image = Image.open(image_path)
-        image = transformResize(image)
-        tensor_image = transformTensor(image).to(device)
-        epoch = 0
 
-        for i in range(10):
 
-            tensor_image, probability = best_pixels_algo(model, tensor_image, label, 0.5, 0.9, 0.01, device)
-            epoch += 1
-            if probability >= 0.9:
-                break
+for i in range(5):
+    image = Image.open( "../dog_images/0.jpg")
+    image = transformResize(image)
+    tensor_image = transformTensor(image).to(device)
+    random_pixels = fixed_pick_pixels(tensor_image, 0.25)
 
+    for j in range(7):
+
+        tensor_image, probability = fixed_best_pixels_algo(model, tensor_image, random_pixels, 285, 0.9, 0.01, device)
         results.append({
-                            "image_path": image_path,
-                            "label": label,
-                            "epoch": epoch,
+                            "iteration": i,
+                            "epoch": j,
                             "probability": probability,
                         })
     
@@ -68,4 +66,4 @@ for image_path in images_path:
 
 df_results = pd.DataFrame(results)
 
-df_results.to_csv("../csv/best_pixels_results_versatil.csv", index=False)
+df_results.to_csv("../csv/best_pixels_results_25_0.005_no_rdm.csv", index=False)

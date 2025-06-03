@@ -1,0 +1,6 @@
+image_path,label,epoch,probability
+../dog_images/4.jpg,56,6,"tensor([0.9862], device='cuda:0')"
+../dog_images/4.jpg,298,6,"tensor([0.9688], device='cuda:0')"
+../dog_images/4.jpg,471,4,"tensor([0.9902], device='cuda:0')"
+../dog_images/4.jpg,613,6,"tensor([0.9994], device='cuda:0')"
+../dog_images/4.jpg,820,6,"tensor([0.9801], device='cuda:0')"

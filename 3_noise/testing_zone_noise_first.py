@@ -45,34 +45,43 @@ reach = [0.01, 0.03, 0.05, 0.07, 0.09]
 results = []
 
 for _ in range(2):
-    for r in reach:
 
-        mask, mask_probability = ea_noise_image(model, 10000, 40, False, 0, 285, 0.15, r, 0.01, 0.9, device)
+    mask, mask_probability = ea_noise_image(model, 10000, 40, False, 0, 285, 0.15, 0.07, 0.01, 0.9, device)
 
-        for image_path in image_list:
+    for image_path in image_list:
 
-            image = Image.open(image_path)
-            image = transformResize(image)
+        image = Image.open(image_path)
+        image = transformResize(image)
 
-            tensor_image = transformTensor(image).to(device)
+        tensor_image = transformTensor(image).to(device)
 
-            combined_image = mask + (tensor_image * (1 - 2 * r))
+        combined_image = mask + (tensor_image * (1 - 2 * 0.07))
 
-            combined_image = combined_image.unsqueeze(0)
+        combined_image = combined_image.unsqueeze(0)
 
-            probabilities = through_model(combined_image, model, device)
+        probabilities1 = through_model(combined_image, model, device)
 
-            probability_class = probabilities[:, 285]
+        val1, idx1 = torch.max(probabilities1, dim=1)
 
-            results.append({
-                                "image_path": image_path,
-                                "r": r,
-                                "mask_probability": mask_probability,
-                                "applied_probability": probability_class,
-                            })
+        tensor_image = tensor_image.unsqueeze(0)
+
+        probabilities2 = through_model(tensor_image, model, device)
+
+        val2, idx2 = torch.max(probabilities2, dim=1)
+
+        
+        results.append({
+                            "image_path": image_path,
+                            "mask_probability": mask_probability,
+                            "best_value_base": val2,
+                            "best_label_base": idx2,
+                            "best_value_mask": val1,
+                            "best_label_mask": idx1,
+                            
+                        })
 
 
 df_results = pd.DataFrame(results)
 
-df_results.to_csv("../csv/noise_results.csv", index=False)
+df_results.to_csv("../csv/noise_results_third.csv", index=False)
 

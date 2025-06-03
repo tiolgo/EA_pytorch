@@ -1,6 +1,6 @@
 # IMPORTS
 
-from ea_base import *
+from best_pixels_algo import *
 
 from transformers import AutoModelForImageClassification, AutoProcessor, AutoImageProcessor
 import torch
@@ -29,22 +29,32 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
 # Set model
-model = timm.create_model('vgg16.tv_in1k', pretrained=True)
 model = timm.create_model('resnet50.tv_in1k', pretrained=True)
-
 model = model.to(device)
 model = model.eval()
 
 # TESTING ZONE
 
+image = Image.open( "../dog_images/1.jpg")
+image = transformResize(image)
+tensor_image = transformTensor(image).to(device)
+
+results = []
+
+
 # STABLE PARAMETERS
 
-start = time.time()
+for i in range(10):
 
-result = ea_base_epoch(model, 1000, "../dog_images/0.jpg", 40, False, 0, 0, 0.15, 0.03, 0.01, 0.1, device)
+    tensor_image, probability = best_pixels_algo(model, tensor_image, 587, 0.5, 0.9, 0.01, device)
+    results.append({
+                        "epoch": i,
+                        "probability": probability,
+                    })
+    
 
-end = time.time()
+# CSV SECTION
 
-print(f"Execution time: {end - start}s")
+# df_results = pd.DataFrame(results)
 
-print(result)
+# df_results.to_csv("../csv/best_pixels_results_25_0.005_rdm.csv", index=False)

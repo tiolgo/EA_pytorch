@@ -16,12 +16,14 @@ import requests
 import matplotlib.pyplot as plt
 import random
 import numpy as np
+import pandas as pd
 import sys
 import math
 import itertools
 import time
 from mpl_toolkits.mplot3d import Axes3D
 import seaborn as sns
+import timm
 
 
 
@@ -32,16 +34,15 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
 # Set model
-model_name = "hilmansw/resnet18-catdog-classifier"
+model = timm.create_model('resnet50.tv_in1k', pretrained=True)
+model = model.to(device)
+model = model.eval()
 
-model = AutoModelForImageClassification.from_pretrained(model_name).to(device)
-model.eval()
-
-
+wanted_class = 285
 
 # TESTING ZONE
 
-image = Image.open("../dog_images/1.jpg")
+image = Image.open("../dog_images/0.jpg")
 image = transformResize(image)
 
 tensor_image = transformTensor(image).to(device)
@@ -54,7 +55,7 @@ print(proba_before)
 
 start1 = time.time()
 
-best_pixels_probabilities = best_pixels(tensor_image, True, 1, 0, model, device)
+best_pixels_probabilities = best_pixels(tensor_image, True, 1, wanted_class, model, device)
 
 end1 = time.time()
 
@@ -62,8 +63,12 @@ print(end1-start1)
 
 
 # list_settings = [(0.7, 0.005), (0.65, 0.005), (0.6, 0.005), (0.55, 0.005), (0.5, 0.005), (0.45, 0.005), (0.4, 0.005), (0.35, 0.005), (0.3, 0.005), (0.25, 0.005), (0.2, 0.005)]
-list_pourcentages = np.arange(0, 1, 0.05)
-list_reach = np.arange(0.005, 0.011, 0.001)
+
+
+
+
+list_pourcentages = np.arange(0, 1.05, 0.05)
+list_reach = np.arange(0, 0.11, 0.01)
 
 list_probabilities = []
 
@@ -75,7 +80,7 @@ for pr, rc in itertools.product(list_pourcentages, list_reach):
     batch_modified_image = modified_image.unsqueeze(0)
 
     proba_after = through_model(batch_modified_image, model, device)
-    proba_after = proba_after[0, 0].item()
+    proba_after = proba_after[:, wanted_class].item()
     list_probabilities.append((proba_after, pr, rc))
     print(proba_after)
 
@@ -105,7 +110,7 @@ sns.heatmap(prob_matrix, xticklabels=pourcentages, yticklabels=reach, cmap='viri
 # Labels
 plt.xlabel('Pourcentage')
 plt.ylabel('Reach')
-plt.title('Heatmap des Probabilités en fonction de Pourcentage et Reach')
+plt.title('Heatmap')
 plt.show()
 
 end3 = time.time()

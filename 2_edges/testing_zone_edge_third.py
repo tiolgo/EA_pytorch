@@ -54,8 +54,8 @@ pourcentage = (pourcentage_fixed/min_pourcentage)
 result_targeted = ea_edges_VF(model, 1000, "../dog_images/2.jpg", 40, False, 0, False, 0, 285, pourcentage, 0.15, 0.03, 
         False, 32, 50, min_pourcentage, device)
 
-result_untargeted = ea_edges_VF(model, 1000, "../dog_images/2.jpg", 40, False, 0, False, 0, 285, pourcentage_fixed, 0.15, 0.03, 
-        False, 32, 50, 1, device)
+result_untargeted = ea_edges_random(model, 1000, "../dog_images/2.jpg", 40, False, 0, False, 0, 285, pourcentage, 0.15, 0.03, 
+        False, 32, 50, min_pourcentage, device)
 
 
 results.append({
@@ -72,8 +72,8 @@ pourcentage = (pourcentage_fixed/min_pourcentage)
 result_targeted = ea_edges_VF(model, 1000, "../dog_images/3.jpg", 40, False, 0, False, 0, 285, pourcentage, 0.15, 0.03, 
         False, 56, 50, min_pourcentage, device)
 
-result_untargeted = ea_edges_VF(model, 1000, "../dog_images/3.jpg", 40, False, 0, False, 0, 285, pourcentage_fixed, 0.15, 0.03, 
-        False, 56, 50, 1, device)
+result_untargeted = ea_edges_random(model, 1000, "../dog_images/3.jpg", 40, False, 0, False, 0, 285, pourcentage, 0.15, 0.03, 
+        False, 56, 50, min_pourcentage, device)
 
 
 results.append({
@@ -93,8 +93,8 @@ pourcentage = (pourcentage_fixed/min_pourcentage)
 result_targeted = ea_edges_VF(model, 1000, "../dog_images/4.jpg", 40, False, 0, False, 0, 285, pourcentage, 0.15, 0.03, 
         False, 32, 50, min_pourcentage, device)
 
-result_untargeted = ea_edges_VF(model, 1000, "../dog_images/4.jpg", 40, False, 0, False, 0, 285, pourcentage_fixed, 0.15, 0.03, 
-        False, 32, 50, 1, device)
+result_untargeted = ea_edges_random(model, 1000, "../dog_images/4.jpg", 40, False, 0, False, 0, 285, pourcentage, 0.15, 0.03, 
+        False, 32, 50, min_pourcentage, device)
 
 
 results.append({
@@ -112,8 +112,8 @@ pourcentage = (pourcentage_fixed/min_pourcentage)
 result_targeted = ea_edges_VF(model, 1000, "../dog_images/5.jpg", 40, False, 0, False, 0, 285, pourcentage, 0.15, 0.03, 
         False, 8, 50, min_pourcentage, device)
 
-result_untargeted = ea_edges_VF(model, 1000, "../dog_images/5.jpg", 40, False, 0, False, 0, 285, pourcentage_fixed, 0.15, 0.03, 
-        False, 8, 50, 1, device)
+result_untargeted = ea_edges_random(model, 1000, "../dog_images/5.jpg", 40, False, 0, False, 0, 285, pourcentage, 0.15, 0.03, 
+        False, 8, 50, min_pourcentage, device)
 
 
 results.append({
@@ -130,8 +130,8 @@ pourcentage = (pourcentage_fixed/min_pourcentage)
 result_targeted = ea_edges_VF(model, 1000, "../dog_images/6.jpg", 40, False, 0, False, 0, 285, pourcentage, 0.15, 0.03, 
         False, 32, 50, min_pourcentage, device)
 
-result_untargeted = ea_edges_VF(model, 1000, "../dog_images/6.jpg", 40, False, 0, False, 0, 285, pourcentage_fixed, 0.15, 0.03, 
-        False, 32, 50, 1, device)
+result_untargeted = ea_edges_random(model, 1000, "../dog_images/6.jpg", 40, False, 0, False, 0, 285, pourcentage, 0.15, 0.03, 
+        False, 32, 50, min_pourcentage, device)
 
 
 results.append({
@@ -148,8 +148,8 @@ pourcentage = (pourcentage_fixed/min_pourcentage)
 result_targeted = ea_edges_VF(model, 1000, "../dog_images/8.jpg", 40, False, 0, False, 0, 285, pourcentage, 0.15, 0.03, 
         False, 8, 50, min_pourcentage, device)
 
-result_untargeted = ea_edges_VF(model, 1000, "../dog_images/8.jpg", 40, False, 0, False, 0, 285, pourcentage_fixed, 0.15, 0.03, 
-        False, 8, 50, 1, device)
+result_untargeted = ea_edges_random(model, 1000, "../dog_images/8.jpg", 40, False, 0, False, 0, 285, pourcentage, 0.15, 0.03, 
+        False, 8, 50, min_pourcentage, device)
 
 
 results.append({
@@ -166,8 +166,8 @@ pourcentage = (pourcentage_fixed/min_pourcentage)
 result_targeted = ea_edges_VF(model, 1000, "../dog_images/9.jpg", 40, False, 0, False, 0, 285, pourcentage, 0.15, 0.03, 
         False, 8, 50, min_pourcentage, device)
 
-result_untargeted = ea_edges_VF(model, 1000, "../dog_images/9.jpg", 40, False, 0, False, 0, 285, pourcentage_fixed, 0.15, 0.03, 
-        False, 8, 50, 1, device)
+result_untargeted = ea_edges_random(model, 1000, "../dog_images/9.jpg", 40, False, 0, False, 0, 285, pourcentage, 0.15, 0.03, 
+        False, 8, 50, min_pourcentage, device)
 
 
 results.append({
@@ -184,4 +184,4 @@ results.append({
 
 df_results = pd.DataFrame(results)
 
-df_results.to_csv("../csv/edge_results_second2.csv", index=False)
+df_results.to_csv("../csv/edge_results_third2.csv", index=False)

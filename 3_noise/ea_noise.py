@@ -254,7 +254,7 @@ def ea_noise_image(model, enums, batch, targeted, targeted_channel, wanted_class
     elite_selection, middle_selection, elite_index, elite_proba = selection(base_selection, probabilities, elite, wanted_class, device)
 
     if elite_proba[0] > targeted_probability:
-      return elite_selection[0], elite_proba[0], i
+      return elite_selection[0], elite_proba[0]
 
 
-  return elite_selection[0], elite_proba[0], i
+  return elite_selection[0], elite_proba[0]

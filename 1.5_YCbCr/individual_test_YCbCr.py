@@ -45,21 +45,51 @@ model = model.eval()
 
 start = time.time()
 
-result = ea_base_VF(model, 1000, "../dog_images/0.jpg", 40, False, 0, 3, 0.15, 0.03, 0.01, device)
+result = ea_base_image(model, 1000, "../dog_images/0.jpg", 40, True, 2, 285, 0.15, 0.2, 0.01, 0.7, device)
 
 end = time.time()
 
 print(f"Execution time: {end - start}s")
 
-print(result)
+image_restored = transformPIL(result)
+
+plt.imshow(image_restored)
+plt.axis("off")
+plt.show()
 
 
 start = time.time()
 
-result = ea_YCbCr_VF(model, 1000, "../dog_images/0.jpg", 40, False, 0, 3, 0.15, 0.03, 0.01, device)
+result = ea_YCbCr_image(model, 1000, "../dog_images/0.jpg", 40, True, 1, 285, 0.15, 0.2, 0.01, 0.7, device)
 
 end = time.time()
 
 print(f"Execution time: {end - start}s")
 
-print(result)
+result = result.unsqueeze(0)
+result = from_ycbcr_to_rgb_batch(result, device)
+result = result.squeeze()
+
+image_restored = transformPIL(result)
+
+plt.imshow(image_restored)
+plt.axis("off")
+plt.show()
+
+start = time.time()
+
+result = ea_YCbCr_image(model, 1000, "../dog_images/0.jpg", 40, True, 2, 285, 0.15, 0.2, 0.01, 0.7, device)
+
+end = time.time()
+
+print(f"Execution time: {end - start}s")
+
+result = result.unsqueeze(0)
+result = from_ycbcr_to_rgb_batch(result, device)
+result = result.squeeze()
+
+image_restored = transformPIL(result)
+
+plt.imshow(image_restored)
+plt.axis("off")
+plt.show()

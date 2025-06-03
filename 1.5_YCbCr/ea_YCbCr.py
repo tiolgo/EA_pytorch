@@ -99,3 +99,181 @@ def ea_YCbCr_VF(model, enums, image_url, batch, targeted, targeted_channel, want
 
     
   return best_probability.cpu().item()
+
+
+
+def ea_YCbCr_epoch(model, enums, image_url, batch, targeted, targeted_channel, wanted_class, height, reach, pourcentage, targeted_probability, device):
+  
+  # WITH ADDITIONAL NOISE -> ADS UP
+
+  # Free GPU cache
+  torch.cuda.empty_cache()
+
+  elite = int(batch/4)
+  mid = int(batch/2)
+
+  # 🧑‍🎨 LOAD AND PROCESS THE BASE IMAGE
+  best_probability = 0
+
+  image = Image.open(image_url)
+  image = transformResize(image)
+
+  tensor_image = transformTensor(image).to(device)
+  multiple_copies = multiple_copies_generator(tensor_image, batch, device)
+  multiple_copies = from_rgb_to_ycbcr_batch(multiple_copies, device)
+  base_images = multiple_copies.clone()
+
+  base_selection = noise_generator(multiple_copies, pourcentage, reach, targeted, targeted_channel, device)
+
+  # 🤖 MODEL AND SELECTION
+  base_selection = from_ycbcr_to_rgb_batch(base_selection, device)
+  probabilities = through_model(base_selection, model, device)
+  base_selection = from_rgb_to_ycbcr_batch(base_selection, device)
+
+  elite_selection, middle_selection, elite_index, elite_proba = selection(base_selection, probabilities, elite, wanted_class, device)
+
+  for i in range(enums):
+
+    # 👨‍💻 COMPUTE EACH SPLIT (10-30) => 40
+
+    # Dont touche the elite
+
+    # Mutate the middle
+    middle_mutated = noise_generator(middle_selection, pourcentage, reach, targeted, targeted_channel, device)
+    middle_mutated = torch.clamp(middle_mutated, base_images[:elite] - reach, base_images[:elite] + reach)
+
+    # elite + 10 random images
+    rand_indices = torch.randperm(batch)[:elite]
+    random_selection = base_selection[rand_indices]
+    keep_selection = torch.cat((elite_selection, random_selection))
+    keep_mutated = noise_generator(keep_selection, pourcentage, reach, targeted, targeted_channel, device)
+    keep_mutated = torch.clamp(keep_mutated, base_images[:mid] - reach, base_images[:mid] + reach)
+    keep_mutated = noise_generator(keep_mutated, pourcentage, reach, targeted, targeted_channel, device)
+    keep_mutated = torch.clamp(keep_mutated, base_images[:mid] - reach, base_images[:mid] + reach)
+
+    base_selection = torch.cat((elite_selection, middle_mutated, keep_mutated)) # concatenate the splits together
+
+    base_selection = from_ycbcr_to_rgb_batch(base_selection, device)
+    probabilities = through_model(base_selection, model, device)
+    base_selection = from_rgb_to_ycbcr_batch(base_selection, device)
+
+    elite_selection, middle_selection, elite_index, elite_proba = selection(base_selection, probabilities, elite, wanted_class, device)
+
+    # 30 -> crossover
+    top_selection = torch.cat((middle_mutated, keep_mutated))
+    parents_index = parent_generator_fixed(top_selection, device)
+    crossed_selection = crossover_generator(top_selection, parents_index, height, device)
+
+    # 10 + 30 = 40 index
+    base_selection = torch.cat((elite_selection, crossed_selection)) # concatenate the splits together
+
+    # ❗️Now we have the final image set for this iteration to pass through the model!
+
+    # 🤖 MODEL AND SELECTION
+    base_selection = from_ycbcr_to_rgb_batch(base_selection, device)
+    probabilities = through_model(base_selection, model, device)
+    base_selection = from_rgb_to_ycbcr_batch(base_selection, device)
+
+    elite_selection, middle_selection, elite_index, elite_proba = selection(base_selection, probabilities, elite, wanted_class, device)
+
+    if elite_proba[0] > targeted_probability:
+      return i
+
+
+  return i
+
+
+def ea_YCbCr_image(model, enums, image_url, batch, targeted, targeted_channel, wanted_class, height, reach, pourcentage, targeted_probability, device):
+  
+  # WITH ADDITIONAL NOISE -> ADS UP
+
+  # Free GPU cache
+  torch.cuda.empty_cache()
+
+  elite = int(batch/4)
+  mid = int(batch/2)
+
+  # 🧑‍🎨 LOAD AND PROCESS THE BASE IMAGE
+  best_probability = 0
+
+  image = Image.open(image_url)
+  image = transformResize(image)
+
+  tensor_image = transformTensor(image).to(device)
+  multiple_copies = multiple_copies_generator(tensor_image, batch, device)
+  base_images = multiple_copies.clone()
+  multiple_copies = from_rgb_to_ycbcr_batch(multiple_copies, device)
+  
+
+  base_selection = noise_generator(multiple_copies, pourcentage, reach, targeted, targeted_channel, device)
+
+  base_selection = from_ycbcr_to_rgb_batch(base_selection, device)
+  base_selection = torch.clamp(base_selection, base_images - reach, base_images + reach)
+  base_selection = from_rgb_to_ycbcr_batch(base_selection, device)
+
+  # 🤖 MODEL AND SELECTION
+  base_selection = from_ycbcr_to_rgb_batch(base_selection, device)
+  probabilities = through_model(base_selection, model, device)
+  base_selection = from_rgb_to_ycbcr_batch(base_selection, device)
+
+  elite_selection, middle_selection, elite_index, elite_proba = selection(base_selection, probabilities, elite, wanted_class, device)
+
+  for i in range(enums):
+
+    # 👨‍💻 COMPUTE EACH SPLIT (10-30) => 40
+
+    # Dont touche the elite
+
+    # Mutate the middle
+    middle_mutated = noise_generator(middle_selection, pourcentage, reach, targeted, targeted_channel, device)
+
+    middle_mutated = from_ycbcr_to_rgb_batch(middle_mutated, device)
+    middle_mutated = torch.clamp(middle_mutated, base_images[:elite] - reach, base_images[:elite] + reach)
+    middle_mutated = from_rgb_to_ycbcr_batch(middle_mutated, device)
+
+    # elite + 10 random images
+    rand_indices = torch.randperm(batch)[:elite]
+    random_selection = base_selection[rand_indices]
+    keep_selection = torch.cat((elite_selection, random_selection))
+    keep_mutated = noise_generator(keep_selection, pourcentage, reach, targeted, targeted_channel, device)
+
+    keep_mutated = from_ycbcr_to_rgb_batch(keep_mutated, device)
+    keep_mutated = torch.clamp(keep_mutated, base_images[:mid] - reach, base_images[:mid] + reach)
+    keep_mutated = from_rgb_to_ycbcr_batch(keep_mutated, device)
+
+    keep_mutated = noise_generator(keep_mutated, pourcentage, reach, targeted, targeted_channel, device)
+
+    keep_mutated = from_ycbcr_to_rgb_batch(keep_mutated, device)
+    keep_mutated = torch.clamp(keep_mutated, base_images[:mid] - reach, base_images[:mid] + reach)
+    keep_mutated = from_rgb_to_ycbcr_batch(keep_mutated, device)
+
+    base_selection = torch.cat((elite_selection, middle_mutated, keep_mutated)) # concatenate the splits together
+
+    base_selection = from_ycbcr_to_rgb_batch(base_selection, device)
+    probabilities = through_model(base_selection, model, device)
+    base_selection = from_rgb_to_ycbcr_batch(base_selection, device)
+
+    elite_selection, middle_selection, elite_index, elite_proba = selection(base_selection, probabilities, elite, wanted_class, device)
+
+    # 30 -> crossover
+    top_selection = torch.cat((middle_mutated, keep_mutated))
+    parents_index = parent_generator_fixed(top_selection, device)
+    crossed_selection = crossover_generator(top_selection, parents_index, height, device)
+
+    # 10 + 30 = 40 index
+    base_selection = torch.cat((elite_selection, crossed_selection)) # concatenate the splits together
+
+    # ❗️Now we have the final image set for this iteration to pass through the model!
+
+    # 🤖 MODEL AND SELECTION
+    base_selection = from_ycbcr_to_rgb_batch(base_selection, device)
+    probabilities = through_model(base_selection, model, device)
+    base_selection = from_rgb_to_ycbcr_batch(base_selection, device)
+
+    elite_selection, middle_selection, elite_index, elite_proba = selection(base_selection, probabilities, elite, wanted_class, device)
+
+    if elite_proba[0] > targeted_probability:
+      return elite_selection[0]
+
+
+  return elite_selection[0]
