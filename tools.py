@@ -614,23 +614,18 @@ def selection(multiple_copies, probabilities, elite, wanted_class, device):
 def from_rgb_to_ycbcr_batch(tensor_images, device):
     B, C, H, W = tensor_images.shape
 
-    # Matrice de conversion RGB -> YCbCr
     transform_matrix = torch.tensor([
         [0.299,     0.587,     0.114],
         [-0.168736, -0.331264, 0.5],
         [0.5,      -0.418688, -0.081312]
     ], device=device)
 
-    # Mise en forme pour @ produit matriciel
     images_flat = tensor_images.permute(0, 2, 3, 1).reshape(-1, 3)
 
-    # Application de la transformation
     ycbcr_flat = images_flat @ transform_matrix.T
 
-    # Ajout du décalage sur Cb et Cr
     ycbcr_flat[:, 1:] += 0.5
 
-    # Reformater
     ycbcr = ycbcr_flat.view(B, H, W, 3).permute(0, 3, 1, 2)
     ycbcr = torch.clamp(ycbcr, 0.0, 1.0)
 
@@ -640,23 +635,18 @@ def from_rgb_to_ycbcr_batch(tensor_images, device):
 def from_ycbcr_to_rgb_batch(tensor_images_ycbcr, device):
     B, C, H, W = tensor_images_ycbcr.shape
 
-    # Matrice inverse de conversion YCbCr -> RGB
     inverse_transform_matrix = torch.tensor([
         [1.0,  0.0,      1.402],
         [1.0, -0.344136, -0.714136],
         [1.0,  1.772,    0.0]
     ], device=device)
 
-    # Mise en forme
     images_flat = tensor_images_ycbcr.permute(0, 2, 3, 1).reshape(-1, 3)
 
-    # Décalage des Cb/Cr (recentrage autour de 0)
     images_flat[:, 1:] -= 0.5
 
-    # Application de la transformation inverse
     rgb_flat = images_flat @ inverse_transform_matrix.T
 
-    # Reformater au format batch image
     rgb_images = rgb_flat.view(B, H, W, 3).permute(0, 3, 1, 2)
     rgb_images = torch.clamp(rgb_images, 0.0, 1.0)
 
