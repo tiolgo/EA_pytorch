@@ -60,8 +60,8 @@ def table_maker(model_name, device, enums, image_list, blurry, blurriness, targe
     min_pourcentage = 0.5
 
     # CHANGING PARAMETERS
-    changing_divider = [8, 16, 32, 56] # 10 56 is th maximum because de kernel is 3x3
-    # changing_min_pourcentage = [0.1, 0.2, 0.4, 0.6, 0.8, 0.9, 0.95, 1] # 7
+
+    changing_divider = [8, 16, 32, 56]
 
     changing_min_pourcentage = [
         6/64,   # 0.09375 ~ 0.1

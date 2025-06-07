@@ -108,6 +108,93 @@ def noise_generator(multiple_copies, pourcentage, reach, targeted, targeted_chan
     return multiple_copies.clamp_(0, 1)
 
 
+
+# CHROMINANCE VERSION
+
+def chrominance_noise_generator_strict(multiple_copies, base_images, pourcentage, chrome_reach, device):
+    
+    batch, channels, height, width = multiple_copies.shape
+
+    total_pixels = height * width
+    pixels_to_change = int(total_pixels * pourcentage)
+
+    pixel_indices = torch.randperm(total_pixels, device=device)[:pixels_to_change]
+
+    pixel_x = pixel_indices // width
+    pixel_y = pixel_indices % width
+
+    output = multiple_copies.clone()
+    half_range = chrome_reach / 2
+
+    for b in range(batch):
+        for i in range(pixels_to_change):
+            x, y = pixel_x[i].item(), pixel_y[i].item()
+            rgb = output[b, :, x, y]
+            base_rgb = base_images[b, :, x, y]
+
+            for _ in range(100):
+                delta = torch.empty(3, device=device).uniform_(-1, 1)
+                delta -= delta.mean()  # somme = 0
+                delta = delta / delta.abs().sum() * chrome_reach
+                new_rgb = rgb + delta
+
+                within_delta_range = (new_rgb >= (base_rgb - half_range)) & (new_rgb <= (base_rgb + half_range))
+                within_valid_range = (new_rgb >= 0) & (new_rgb <= 1)
+
+                if torch.all(within_delta_range & within_valid_range):
+
+                    output[b, :, x, y] = new_rgb
+                    break
+            else:
+                output[b, :, x, y] = rgb  # pas de changement si on dépasse max_attempts obligé pour ne pas bloquer l'algorithme
+
+    return output
+
+
+
+def chrominance_noise_generator_strict_fast(multiple_copies, base_images, pourcentage, chrome_reach, device, max_attempts=100):
+    # Assure-toi que tout est bien sur le GPU
+    multiple_copies = multiple_copies.to(device)
+    base_images = base_images.to(device)
+
+    batch, channels, height, width = multiple_copies.shape
+    total_pixels = height * width
+    pixels_to_change = int(total_pixels * pourcentage)
+
+    # Indices des pixels à changer
+    pixel_indices = torch.randperm(total_pixels, device=device)[:pixels_to_change]
+    pixel_x = (pixel_indices // width).long()
+    pixel_y = (pixel_indices % width).long()
+
+    output = multiple_copies.clone()
+    half_range = chrome_reach / 2
+
+    for b in range(batch):
+        for i in range(pixels_to_change):
+            x = pixel_x[i]
+            y = pixel_y[i]
+
+            rgb = output[b, :, x, y]
+            base_rgb = base_images[b, :, x, y]
+
+            for _ in range(max_attempts):
+                delta = torch.empty(3, device=device).uniform_(-1, 1)
+                delta -= delta.mean()
+                delta = delta / delta.abs().sum() * chrome_reach
+                new_rgb = rgb + delta
+
+                # Vérification des contraintes
+                if torch.all((new_rgb >= base_rgb - half_range) & (new_rgb <= base_rgb + half_range) & (new_rgb >= 0) & (new_rgb <= 1)):
+                    output[b, :, x, y] = new_rgb
+                    break
+            else:
+                output[b, :, x, y] = rgb  # si rien trouvé
+
+    return output
+
+
+
+
 # BEST VERSION
 
 # Rather to modify random pixels

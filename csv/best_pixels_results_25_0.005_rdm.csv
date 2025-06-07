@@ -1,8 +1,0 @@
-epoch,probability
-0,"tensor([0.0005], device='cuda:0')"
-1,"tensor([0.0017], device='cuda:0')"
-2,"tensor([0.0050], device='cuda:0')"
-3,"tensor([0.0135], device='cuda:0')"
-4,"tensor([0.0334], device='cuda:0')"
-5,"tensor([0.0785], device='cuda:0')"
-6,"tensor([0.1739], device='cuda:0')"

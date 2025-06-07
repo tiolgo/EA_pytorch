@@ -40,7 +40,7 @@ model = model.eval()
 
 start = time.time()
 
-result = ea_edges_VF(model, 100, '../dog_images/0.jpg', 40, False, 4, False, 1, 3, 0.01, 0.3, 0.03, 
+result = ea_edges_VF(model, 100, '../dog_images/0.jpg', 40, False, 4, False, 1, 285, 0.01, 0.15, 0.03, 
                 False, 56, 700, 0.5, device)
 
 end = time.time()
@@ -51,7 +51,18 @@ print(result)
 
 start = time.time()
 
-result = ea_edges_v4(model, 100, '../dog_images/0.jpg', 40, False, 4, False, 1, 3, 0.3, 0.03, 
+result = ea_edges_VF(model, 1000, '../dog_images/0.jpg', 40, False, 4, False, 1, 285, 0.01, 0.15, 0.03, 
+                False, 56, 700, 0.5, device)
+
+end = time.time()
+
+print(f"Execution time: {end - start}s")
+
+print(result)
+
+start = time.time()
+
+result = ea_edges_VF(model, 10000, '../dog_images/0.jpg', 40, False, 4, False, 1, 285, 0.01, 0.15, 0.03, 
                 False, 56, 700, 0.5, device)
 
 end = time.time()

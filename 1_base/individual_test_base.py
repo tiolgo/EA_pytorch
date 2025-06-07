@@ -29,7 +29,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(device)
 
 # Set model
-model = timm.create_model('vgg16.tv_in1k', pretrained=True)
+# model = timm.create_model('vgg16.tv_in1k', pretrained=True)
 model = timm.create_model('resnet50.tv_in1k', pretrained=True)
 
 model = model.to(device)
@@ -41,7 +41,7 @@ model = model.eval()
 
 start = time.time()
 
-result = ea_base_epoch(model, 1000, "../dog_images/0.jpg", 40, False, 0, 0, 0.15, 0.03, 0.01, 0.1, device)
+result = ea_base_VF(model, 1000, "../dog_images/0.jpg", 40, False, 0, 285, 0.15, 0.03, 0.01, device)
 
 end = time.time()
 

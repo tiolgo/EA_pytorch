@@ -35,26 +35,34 @@ model = model.eval()
 
 # TESTING ZONE
 
-image = Image.open( "../dog_images/1.jpg")
+image = Image.open( "../dog_images/0.jpg")
 image = transformResize(image)
 tensor_image = transformTensor(image).to(device)
 
-results = []
-
-
 # STABLE PARAMETERS
 
-for i in range(10):
 
-    tensor_image, probability = best_pixels_algo(model, tensor_image, 587, 0.5, 0.9, 0.01, device)
-    results.append({
-                        "epoch": i,
-                        "probability": probability,
-                    })
-    
+start = time.time()
 
-# CSV SECTION
+tensor_image, probability = best_pixels_algo(model, tensor_image, 285, 0.25, 1, 0.01, device)
 
-# df_results = pd.DataFrame(results)
+end = time.time()
 
-# df_results.to_csv("../csv/best_pixels_results_25_0.005_rdm.csv", index=False)
+print(f"Execution time: {end - start}s")
+
+start = time.time()
+
+tensor_image, probability = best_pixels_algo(model, tensor_image, 285, 0.5, 1, 0.01, device)
+
+end = time.time()
+
+print(f"Execution time: {end - start}s")
+
+start = time.time()
+
+tensor_image, probability = best_pixels_algo(model, tensor_image, 285, 1, 1, 0.01, device)
+
+end = time.time()
+
+print(f"Execution time: {end - start}s")
+

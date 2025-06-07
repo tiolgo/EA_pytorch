@@ -40,35 +40,25 @@ model = model.eval()
 
 # TESTING ZONE
 
+image_list = ["../dog_images/0.jpg", "../dog_images/1.jpg", "../dog_images/2.jpg", "../dog_images/3.jpg", "../dog_images/4.jpg"]
 
-# STABLE PARAMETERS
 
-start = time.time()
+results = []
 
-result = ea_YCbCr_VF(model, 100, '../dog_images/0.jpg', 40, False, 0, 285, 0.15, 0.03, 0.01, device)
 
-end = time.time()
+for image_path in image_list:
+    print("image suivante")
+    result_RGB = ea_base_VF(model, 100, image_path, 40, False, 0, 285, 0.15, 0.03, 0.01, device)
+    result_chrome = ea_chrominance_VF_fast(model, 100, image_path, 40, 285, 0.15, 0.09, 0.01, device)
 
-print(f"Execution time: {end - start}s")
+    results.append({
+                        "epochs_RGB": result_RGB,
+                        "epochs_chrome": result_chrome
+                    })
 
-print(result)
 
-start = time.time()
+# CSV SECTION
 
-result = ea_YCbCr_VF(model, 1000, '../dog_images/0.jpg', 40, False, 0, 285, 0.15, 0.03, 0.01, device)
+df_results = pd.DataFrame(results)
 
-end = time.time()
-
-print(f"Execution time: {end - start}s")
-
-print(result)
-
-start = time.time()
-
-result = ea_YCbCr_VF(model, 10000, '../dog_images/0.jpg', 40, False, 0, 285, 0.15, 0.03, 0.01, device)
-
-end = time.time()
-
-print(f"Execution time: {end - start}s")
-
-print(result)
+df_results.to_csv("../csv/YCbCr_results_chrome.csv", index=False)
