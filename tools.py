@@ -153,7 +153,7 @@ def chrominance_noise_generator_strict(multiple_copies, base_images, pourcentage
 
 
 def chrominance_noise_generator_strict_fast(multiple_copies, base_images, pourcentage, chrome_reach, device, max_attempts=100):
-    # Assure-toi que tout est bien sur le GPU
+    
     multiple_copies = multiple_copies.to(device)
     base_images = base_images.to(device)
 
