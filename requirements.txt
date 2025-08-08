@@ -1,0 +1,11 @@
+torch
+torchvision
+transformers
+timm
+numpy
+pandas
+matplotlib
+seaborn
+scikit-image
+Pillow
+requests
